@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class LRUcache {
+public:
+    class node {
+    public:
+        int key;
+        int val;
+        node* prev;
+        node* next;
+        
+        node(int key, int val) : key(key), val(val), prev(nullptr), next(nullptr) {}
+    };
+    
+    node* head;
+    node* tail;
+    int capacity;
+    unordered_map<int, node*> m;
+    
+    LRUcache(int capacity) : capacity(capacity) {
+        head = new node(-1, -1);
+        tail = new node(-1, -1);
+        head->next = tail;
+        tail->prev = head;
+    }
+    
+    void addNode(node* n) {
+        node* temp = head->next;
+        head->next = n;
+        n->prev = head;
+        n->next = temp;
+        temp->prev = n;
+    }
+    
+    void deleteNode(node* delnode) {
+        node* delprev = delnode->prev;
+        node* delnext = delnode->next;
+        delprev->next = delnext;
+        delnext->prev = delprev;
+    }
+    
+    int get(int key) {
+        if (m.find(key) != m.end()) {
+            node* n = m[key];
+            int value = n->val;
+            deleteNode(n);
+            addNode(n);
+            return value;
+        }
+        return -1;
+    }
+    
+    void put(int key, int value) {
+        if (m.find(key) != m.end()) {
+            // Key already exists, update the value and move to front
+            node* n = m[key];
+            n->val = value;
+            deleteNode(n);
+            addNode(n);
+        } else {
+            if (m.size() == capacity) {
+                // Capacity reached, remove the least recently used (LRU) item
+                node* n = tail->prev;
+                m.erase(n->key);
+                deleteNode(n);
+                delete n; // Free the memory
+            }
+            // Add the new node
+            node* newNode = new node(key, value);
+            addNode(newNode);
+            m[key] = newNode;
+        }
+    }
+    
+    ~LRUcache() {
+        node* current = head;
+        while (current) {
+            node* next = current->next;
+            delete current;
+            current = next;
+        }
+    }
+};
+
+int main() {
+    LRUcache cache(3);
+    
+    cache.put(1, 1);
+    cache.put(2, 2);
+    cache.put(3, 3);
+    
+    cout << cache.get(1) << endl; // Outputs: 1
+    cout << cache.get(10) << endl; // Outputs: -1
+    cache.put(4, 4); // Should evict key 2
+    cout << cache.get(2) << endl; // Outputs: -1
+    cache.put(5, 5); // Should evict key 3
+    cout << cache.get(3) << endl; // Outputs: -1
+    cout << cache.get(1) << endl; // Outputs: 1
+    cout << cache.get(5) << endl; // Outputs: 5
+    
+    return 0;
+}
