@@ -1,0 +1,6 @@
+Summary
+Singleton Pattern: Manages a single instance of NotificationManager.
+Factory Method Pattern: Creates instances of different types of Account subclasses.
+Observer Pattern: Notifies Observer objects of changes.
+Strategy Pattern: Implements different payment methods with PaymentStrategy.
+Decorator Pattern: Extends booking features using BookingDecorator.

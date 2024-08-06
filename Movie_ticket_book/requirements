@@ -1,0 +1,75 @@
+Requirements
+List cities where cinemas are located.
+Each cinema can have multiple halls and each hall will run one show at a time.
+Each movie will have multiple shows.
+Each cinema hall runs only one movie at a time.
+Customers can search movies based on title, genre, language, release date, and city name.
+Customers can select show and book tickets.
+The system will show seating arrangements in the hall and Customers can select their own seats based on their preferences.
+Customers can pay for tickets and cancel their tickets.
+The system can send notifications whenever there is a new movie, or when a booking is made or canceled.
+Customers of our system should be able to pay with credit cards or cash.
+The system should ensure that no two customers can reserve the same seat.
+Admin can add a new movie, cancel the movie.
+Main Actors:
+Admin: Can add/cancel the movie, block/unblock a user.
+Customer: Can search movies, book, and cancel tickets.
+Guest: Can search movies but to register themselves for booking movies.
+System: Sending notification whenever there is a new movie, or when a booking is made or canceled.
+
+**********
+Requirements and Corresponding Implementations:
+List cities where cinemas are located:
+
+Implemented: City class maintains the name of the city.
+Each cinema can have multiple halls and each hall will run one show at a time:
+
+Implemented: Cinema class contains multiple CinemaHall objects. Each CinemaHall has multiple seats and can run shows (Show class).
+Each movie will have multiple shows:
+
+Implemented: Movie class contains multiple Show objects.
+Each cinema hall runs only one movie at a time:
+
+Implemented: Each Show object is associated with one CinemaHall and one Movie. The CinemaHall is linked to the Show, ensuring it runs one movie at a time.
+Customers can search movies based on title, genre, language, release date, and city name:
+
+Implemented: Movie::searchMovies allows searching based on title, genre, language, and release date. City-based searching could be added if required.
+Customers can select show and book tickets:
+
+Implemented: Booking and its derived classes (BasicBooking, PremiumBookingDecorator) handle reservations. CinemaHall manages seat reservations.
+The system will show seating arrangements in the hall and customers can select their own seats based on their preferences:
+
+Implemented: CinemaHall class provides a method to show seating arrangements (showSeatingArrangement).
+Customers can pay for tickets and cancel their tickets:
+
+Implemented: Payment class with PaymentStrategy (including CreditCardPayment and CashPayment) handles payment. BasicBooking class manages ticket cancellation.
+The system can send notifications whenever there is a new movie, or when a booking is made or canceled:
+
+Implemented: NotificationManager singleton handles notifications. Notification class can be used for sending messages.
+Customers of our system should be able to pay with credit cards or cash:
+
+Implemented: Payment strategies include CreditCardPayment and CashPayment.
+The system should ensure that no two customers can reserve the same seat:
+
+Implemented: CinemaHall class manages seat reservations ensuring no double booking (reserveSeat).
+Admin can add a new movie, cancel the movie:
+
+Partially Implemented: Admin functionalities could be expanded. Currently, no direct interface for adding/canceling movies is shown in the example.
+Main Actors:
+
+Admin: Can log in, but direct movie management is not fully implemented.
+Customer: Can log in and reserve/cancel tickets.
+Guest: Can search movies but needs registration to book tickets.
+System: Handles notifications through NotificationManager.
+Use Cases for Movie Ticket Booking System:
+
+Search Movies: Implemented via Movie::searchMovies.
+Create/Modify/Delete Booking: Implemented through Booking and derived classes.
+Select Seats: Implemented through CinemaHall::reserveSeat and showSeatingArrangement.
+Pay for the Ticket: Implemented via Payment and PaymentStrategy.
+Refund for the Ticket if Someone Cancels Their Ticket: Implemented through BasicBooking::cancel.
+Additional Considerations:
+Admin and Guest Functionalities: Admin’s ability to add and cancel movies is not explicitly shown. You might want to expand on this.
+Error Handling: Ensure proper error handling and edge cases are managed (e.g., invalid seat numbers, booking conflicts).
+Summary:
+The provided code meets most of the requirements but could benefit from additional functionality and refinements, especially concerning administrative operations and more detailed guest management. If you need to add or refine features, consider expanding the Admin class for full CRUD operations on movies and integrating user management.

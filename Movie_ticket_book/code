@@ -1,0 +1,480 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Class representing a City
+class City {
+private:
+    string name;
+
+public:
+    City(const string& name) : name(name) {}
+
+    string getName() const {
+        return name;
+    }
+};
+
+// Class representing a Seat in Cinema Hall
+class CinemaHallSeat {
+private:
+    int seatNumber;
+    bool isReserved;
+
+public:
+    CinemaHallSeat(int number) : seatNumber(number), isReserved(false) {}
+
+    int getSeatNumber() const {
+        return seatNumber;
+    }
+
+    bool isSeatReserved() const {
+        return isReserved;
+    }
+
+    void reserve() {
+        isReserved = true;
+    }
+
+    void release() {
+        isReserved = false;
+    }
+};
+
+// Class representing a Cinema Hall
+class CinemaHall {
+private:
+    vector<CinemaHallSeat> seats;
+    string hallName;
+
+public:
+    CinemaHall(const string& name, int numSeats) : hallName(name) {
+        for (int i = 1; i <= numSeats; ++i) {
+            seats.emplace_back(i);
+        }
+    }
+
+    void showSeatingArrangement() const {
+        for (const auto& seat : seats) {
+            cout << "Seat " << seat.getSeatNumber() << (seat.isSeatReserved() ? " (Reserved)" : " (Available)") << endl;
+        }
+    }
+
+    bool reserveSeat(int seatNumber) {
+        for (auto& seat : seats) {
+            if (seat.getSeatNumber() == seatNumber && !seat.isSeatReserved()) {
+                seat.reserve();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void releaseSeat(int seatNumber) {
+        for (auto& seat : seats) {
+            if (seat.getSeatNumber() == seatNumber) {
+                seat.release();
+                break;
+            }
+        }
+    }
+
+    string getHallName() const {
+        return hallName;
+    }
+};
+
+// Class representing a Show
+class Show {
+private:
+    CinemaHall* hall;
+    string movieTitle;
+    time_t showTime;
+
+public:
+    Show(CinemaHall* hall, const string& movieTitle, time_t showTime)
+        : hall(hall), movieTitle(movieTitle), showTime(showTime) {
+    }
+
+    CinemaHall* getHall() const {
+        return hall;
+    }
+
+    string getMovieTitle() const {
+        return movieTitle;
+    }
+
+    time_t getShowTime() const {
+        return showTime;
+    }
+};
+
+// Class representing a Movie
+class Movie {
+private:
+    string title;
+    string genre;
+    string language;
+    string releaseDate;
+    vector<Show*> shows;
+
+public:
+    Movie(const string& title, const string& genre, const string& language, const string& releaseDate)
+        : title(title), genre(genre), language(language), releaseDate(releaseDate) {}
+
+    void addShow(Show* show) {
+        shows.push_back(show);
+    }
+
+    vector<Show*> getShows() const {
+        return shows;
+    }
+
+    string getTitle() const {
+        return title;
+    }
+
+    string getGenre() const {
+        return genre;
+    }
+
+    string getLanguage() const {
+        return language;
+    }
+
+    string getReleaseDate() const {
+        return releaseDate;
+    }
+
+    static vector<Movie*> searchMovies(const vector<Movie*>& movies, const string& title, const string& genre, const string& language, const string& releaseDate) {
+        vector<Movie*> results;
+        for (const auto& movie : movies) {
+            if ((title.empty() || movie->getTitle() == title) &&
+                (genre.empty() || movie->getGenre() == genre) &&
+                (language.empty() || movie->getLanguage() == language) &&
+                (releaseDate.empty() || movie->getReleaseDate() == releaseDate)) {
+                results.push_back(movie);
+            }
+        }
+        return results;
+    }
+};
+
+// Class representing a Cinema
+class Cinema {
+private:
+    vector<CinemaHall> halls;
+    City city;
+
+public:
+    Cinema(const City& city) : city(city) {}
+
+    void addHall(const CinemaHall& hall) {
+        halls.push_back(hall);
+    }
+
+    vector<CinemaHall>& getHalls() {
+        return halls;
+    }
+
+    City getCity() const {
+        return city;
+    }
+};
+
+// Abstract Base Class for Booking
+class Booking {
+protected:
+    Show* show;
+    int seatNumber;
+
+public:
+    Booking(Show* show, int seatNumber) : show(show), seatNumber(seatNumber) {}
+    virtual bool reserve() = 0;
+    virtual void cancel() = 0;
+    virtual ~Booking() {}
+};
+
+// Concrete Booking Class
+class BasicBooking : public Booking {
+public:
+    BasicBooking(Show* show, int seatNumber) : Booking(show, seatNumber) {}
+
+    bool reserve() override {
+        return show->getHall()->reserveSeat(seatNumber);
+    }
+
+    void cancel() override {
+        show->getHall()->releaseSeat(seatNumber);
+    }
+};
+
+// Booking Decorator
+class BookingDecorator : public Booking {
+protected:
+    Booking* decoratedBooking;
+
+public:
+    BookingDecorator(Booking* booking) : Booking(nullptr, 0), decoratedBooking(booking) {}
+
+    bool reserve() override {
+        return decoratedBooking->reserve();
+    }
+
+    void cancel() override {
+        decoratedBooking->cancel();
+    }
+};
+
+// Premium Booking Decorator
+class PremiumBookingDecorator : public BookingDecorator {
+public:
+    PremiumBookingDecorator(Booking* booking) : BookingDecorator(booking) {}
+
+    bool reserve() override {
+        cout << "Adding premium features to booking." << endl;
+        return BookingDecorator::reserve();
+    }
+
+    void cancel() override {
+        BookingDecorator::cancel();
+    }
+};
+
+// Payment Strategies
+class PaymentStrategy {
+public:
+    virtual void pay(double amount) = 0;
+    virtual ~PaymentStrategy() {}
+};
+
+class CreditCardPayment : public PaymentStrategy {
+public:
+    void pay(double amount) override {
+        cout << "Paid " << amount << " using Credit Card." << endl;
+    }
+};
+
+class CashPayment : public PaymentStrategy {
+public:
+    void pay(double amount) override {
+        cout << "Paid " << amount << " using Cash." << endl;
+    }
+};
+
+class Payment {
+private:
+    PaymentStrategy* strategy;
+    double amount;
+
+public:
+    Payment(PaymentStrategy* strategy, double amount) : strategy(strategy), amount(amount) {}
+
+    void process() {
+        strategy->pay(amount);
+    }
+};
+
+// Singleton Pattern for NotificationManager
+class Notification {
+public:
+    Notification(const string& message) : message(message) {}
+    void send() const {
+        cout << "Notification: " << message << endl;
+    }
+private:
+    string message;
+};
+
+class NotificationManager {
+public:
+    static NotificationManager& getInstance() {
+        static NotificationManager instance;
+        return instance;
+    }
+
+    void addNotification(const Notification& notification) {
+        notifications.push_back(notification);
+        notification.send();
+    }
+    
+private:
+    NotificationManager() {}
+    NotificationManager(const NotificationManager&) = delete;
+    NotificationManager& operator=(const NotificationManager&) = delete;
+
+    vector<Notification> notifications;
+};
+
+// Observer Pattern for Notifications
+class Observer {
+public:
+    virtual void update(const string& message) = 0;
+};
+
+class Subject {
+private:
+    list<Observer*> observers;
+
+public:
+    void addObserver(Observer* observer) {
+        observers.push_back(observer);
+    }
+
+    void removeObserver(Observer* observer) {
+        observers.remove(observer);
+    }
+
+    void notifyObservers(const string& message) {
+        for (Observer* observer : observers) {
+            observer->update(message);
+        }
+    }
+};
+
+class CustomerObserver : public Observer {
+private:
+    string name;
+
+public:
+    CustomerObserver(const string& name) : name(name) {}
+
+    void update(const string& message) override {
+        cout << "Customer " << name << " received notification: " << message << endl;
+    }
+};
+
+class AdminObserver : public Observer {
+private:
+    string name;
+
+public:
+    AdminObserver(const string& name) : name(name) {}
+
+    void update(const string& message) override {
+        cout << "Admin " << name << " received notification: " << message << endl;
+    }
+};
+
+// Factory Method Pattern for User Creation
+class Account {
+protected:
+    string username;
+    string password;
+
+public:
+    virtual void login() = 0;
+    virtual void logout() = 0;
+    virtual ~Account() {}
+};
+
+class Customer : public Account {
+public:
+    void login() override {
+        cout << "Customer logged in: " << username << endl;
+    }
+
+    void logout() override {
+        cout << "Customer logged out: " << username << endl;
+    }
+};
+
+class Admin : public Account {
+public:
+    void login() override {
+        cout << "Admin logged in: " << username << endl;
+    }
+
+    void logout() override {
+        cout << "Admin logged out: " << username << endl;
+    }
+};
+
+class Guest : public Account {
+public:
+    void login() override {
+        cout << "Guest logged in: " << username << endl;
+    }
+
+    void logout() override {
+        cout << "Guest logged out: " << username << endl;
+    }
+};
+
+class AccountFactory {
+public:
+    enum class AccountType { CUSTOMER, ADMIN, GUEST };
+
+    static Account* createAccount(AccountType type) {
+        switch (type) {
+            case AccountType::CUSTOMER: return new Customer();
+            case AccountType::ADMIN: return new Admin();
+            case AccountType::GUEST: return new Guest();
+            default: return nullptr;
+        }
+    }
+};
+
+// Main function demonstrating usage
+int main() {
+    // Setup example data
+    City city("New York");
+    Cinema cinema(city);
+    CinemaHall hall1("Hall 1", 50);
+    CinemaHall hall2("Hall 2", 75);
+    cinema.addHall(hall1);
+    cinema.addHall(hall2);
+
+    Movie movie1("Movie 1", "Action", "English", "2024-08-01");
+    Movie movie2("Movie 2", "Drama", "English", "2024-09-01");
+
+    Show show1(&hall1, movie1.getTitle(), time(nullptr));
+    Show show2(&hall2, movie2.getTitle(), time(nullptr) + 86400); // 1 day later
+
+    movie1.addShow(&show1);
+    movie2.addShow(&show2);
+
+    // Singleton Pattern
+    NotificationManager& nm = NotificationManager::getInstance();
+    nm.addNotification(Notification("New movie released!"));
+
+    // Factory Method Pattern
+    Account* customer = AccountFactory::createAccount(AccountFactory::AccountType::CUSTOMER);
+    customer->login();
+    customer->logout();
+    delete customer;
+
+    // Observer Pattern
+    Subject subject;
+    CustomerObserver cust1("Alice");
+    AdminObserver admin1("Bob");
+    subject.addObserver(&cust1);
+    subject.addObserver(&admin1);
+    subject.notifyObservers("New show available!");
+
+    // Strategy Pattern
+    PaymentStrategy* paymentMethod = new CreditCardPayment();
+    Payment payment(paymentMethod, 100.0);
+    payment.process();
+    delete paymentMethod;
+
+    // Decorator Pattern
+    Booking* basicBooking = new BasicBooking(&show1, 10);
+    Booking* premiumBooking = new PremiumBookingDecorator(basicBooking);
+    premiumBooking->reserve(); // Correct method call
+    delete basicBooking;
+    delete premiumBooking;
+
+    // Booking example
+    BasicBooking booking(&show1, 10);
+    if (booking.reserve()) {
+        cout << "Seat reserved successfully!" << endl;
+    } else {
+        cout << "Failed to reserve seat." << endl;
+    }
+
+    // Cancel booking
+    booking.cancel();
+    cout << "Seat reservation canceled." << endl;
+
+    return 0;
+}
