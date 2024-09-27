@@ -1,0 +1,165 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2759
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Roman;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red255\green255\blue255;
+}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c0\c0\c0\c87059;\cssrgb\c100000\c100000\c100000;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 //Rate limiter for Token buckting system\
+\
+import java.util.*;\
+import java.time.Instant;\
+import java.util.concurrent.ExecutorService;\
+import java.util.concurrent.Executors;\
+import java.util.concurrent.TimeUnit;\
+import java.time.Instant;\
+import java.util.concurrent.ExecutorService;\
+import java.util.concurrent.Executors;\
+import java.util.concurrent.TimeUnit;\
+\
+class TokenBucket \{\
+    private final int size;\
+    private long lastfilled;\
+    private int availabletoken;\
+\
+    public TokenBucket(int size) \{\
+        this.size = size;\
+        this.lastfilled = Instant.now().getEpochSecond();\
+        this.availabletoken = size;\
+    \}\
+\
+    public synchronized boolean consumeToken() \{\
+        refillToken();\
+        if (availabletoken > 0) \{\
+            availabletoken--;\
+            System.out.println(Thread.currentThread().getName() + " consumed a token. Tokens left: " + availabletoken);\
+            return true;\
+        \} else \{\
+            System.out.println(Thread.currentThread().getName() + " failed to consume a token. No tokens available.");\
+            return false;\
+        \}\
+    \}\
+\
+    public synchronized void refillToken() \{\
+        long currenttime = Instant.now().getEpochSecond();\
+        int refillRate = 1;  // 1 token per second\
+\
+        if (lastfilled < currenttime) \{\
+            int newTokens = (int) (currenttime - lastfilled) * refillRate;\
+            availabletoken = Math.min(size, availabletoken + newTokens);  // Refill but do not exceed bucket size\
+            lastfilled = currenttime;  // Update last filled time\
+            System.out.println("Bucket refilled. Current tokens: " + availabletoken);\
+        \}\
+    \}\
+\}\
+\
+class TokenConsumer implements Runnable \{\
+\
+    private final TokenBucket bucket;\
+\
+    public TokenConsumer(TokenBucket bucket) \{\
+        this.bucket = bucket;\
+    \}\
+\
+    @Override\
+    public void run() \{\
+        while (!Thread.currentThread().isInterrupted()) \{\
+            bucket.consumeToken();\
+            try \{\
+                Thread.sleep(500);  // Sleep for 500ms\
+            \} catch (InterruptedException e) \{\
+                Thread.currentThread().interrupt();  // Handle the interruption and exit loop\
+                break;\
+            \}\
+        \}\
+    \}\
+\}\
+\
+public class TokenBucketSystem \{\
+    public static void main(String[] args) throws InterruptedException \{\
+\
+        TokenBucket bucket = new TokenBucket(10);\
+\
+        ExecutorService executor = Executors.newFixedThreadPool(5);\
+\
+        for (int i = 0; i < 5; i++) \{\
+            executor.execute(new TokenConsumer(bucket));\
+        \}\
+\
+        Thread.sleep(10000);  // Allow the threads to run for 10 seconds\
+        executor.shutdown();\
+        if (!executor.awaitTermination(5, TimeUnit.SECONDS)) \{\
+            executor.shutdownNow();  // Force shutdown if tasks are not finished\
+        \}\
+        System.out.println("System shutting down.");\
+    \}\
+\}\
+\
+//Output\
+\
+/*\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs28 \cf3 \cb4 \strokec3 pool-1-thread-1 consumed a token. Tokens left: 9\
+pool-1-thread-5 consumed a token. Tokens left: 8\
+pool-1-thread-4 consumed a token. Tokens left: 7\
+pool-1-thread-3 consumed a token. Tokens left: 6\
+pool-1-thread-2 consumed a token. Tokens left: 5\
+Bucket refilled. Current tokens: 6\
+pool-1-thread-1 consumed a token. Tokens left: 5\
+pool-1-thread-2 consumed a token. Tokens left: 4\
+pool-1-thread-3 consumed a token. Tokens left: 3\
+pool-1-thread-5 consumed a token. Tokens left: 2\
+pool-1-thread-4 consumed a token. Tokens left: 1\
+pool-1-thread-1 consumed a token. Tokens left: 0\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+Bucket refilled. Current tokens: 1\
+pool-1-thread-1 consumed a token. Tokens left: 0\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-1 failed to consume a token. No tokens available.\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+Bucket refilled. Current tokens: 1\
+pool-1-thread-1 consumed a token. Tokens left: 0\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-1 failed to consume a token. No tokens available.\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+Bucket refilled. Current tokens: 1\
+pool-1-thread-1 consumed a token. Tokens left: 0\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-1 failed to consume a token. No tokens available.\
+pool-1-thread-5 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+Bucket refilled. Current tokens: 1\
+pool-1-thread-5 consumed a token. Tokens left: 0\
+pool-1-thread-4 failed to consume a token. No tokens available.\
+pool-1-thread-3 failed to consume a token. No tokens available.\
+pool-1-thread-1 failed to consume a token. No tokens available.\
+pool-1-thread-2 failed to consume a token. No tokens available.\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\fs24 \cf0 \cb1 \strokec2 \
+*/}
