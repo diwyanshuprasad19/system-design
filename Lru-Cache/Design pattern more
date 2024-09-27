@@ -1,9 +1,12 @@
 Patterns that can be used
 1. Strategy Pattern
 The Strategy Pattern allows you to define a family of algorithms, encapsulate each one, and make them interchangeable. In the context of an LRU cache, you can use this pattern to define different caching strategies or eviction policies.
+
 2. Decorator Pattern
 The Decorator Pattern can be used to extend the functionality of the cache dynamically. For example, you might want to add logging, metrics, or other features to your cache without modifying its core behavior.
+
 3. Singleton Pattern
 If you want to ensure that there is only one instance of your LRU cache throughout your application, you can use the Singleton Pattern. This can be useful if you want to maintain a single cache that is globally accessible.
+
 4. Proxy Pattern
 The Proxy Pattern can be used to control access to the LRU cache. For example, you might use a proxy to add thread-safety or additional checks before accessing the cache.

@@ -1,6 +1,7 @@
-Summary
-Singleton Pattern: Manages a single instance of NotificationManager.
-Factory Method Pattern: Creates instances of different types of Account subclasses.
-Observer Pattern: Notifies Observer objects of changes.
-Strategy Pattern: Implements different payment methods with PaymentStrategy.
-Decorator Pattern: Extends booking features using BookingDecorator.
+EVery Design Pattern that can be used in the code for Ticket Booking System:
+
+1.Singleton Pattern: Manages a single instance of NotificationManager.
+2.Factory Method Pattern: Creates instances of different types of Account subclasses.
+3.Observer Pattern: Notifies Observer objects of changes.
+4.Strategy Pattern: Implements different payment methods with PaymentStrategy.
+5.Decorator Pattern: Extends booking features using BookingDecorator.
