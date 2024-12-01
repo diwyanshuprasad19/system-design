@@ -1,124 +1,48 @@
-//code is in java:LLd will be done in java
-
-public class City {
-    private String name;
-
-    public City(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-}
-CinemaHallSeat.java
-java
-Copy code
-public class CinemaHallSeat {
-    private int seatNumber;
-    private boolean isReserved;
-
-    public CinemaHallSeat(int number) {
-        this.seatNumber = number;
-        this.isReserved = false;
-    }
-
-    public int getSeatNumber() {
-        return seatNumber;
-    }
-
-    public boolean isSeatReserved() {
-        return isReserved;
-    }
-
-    public void reserve() {
-        isReserved = true;
-    }
-
-    public void release() {
-        isReserved = false;
-    }
-}
-CinemaHall.java
-java
-Copy code
-import java.util.ArrayList;
-import java.util.List;
-
-public class CinemaHall
-
-
-You said:
-all in single file
-ChatGPT said:
-ChatGPT
-Sure, I'll combine all the classes into a single Java file for you. This is generally not recommended for real-world applications due to maintainability issues, but for demonstration purposes, here’s how you could do it:
-
-java
-Copy code
-import java.util.*;
+#include <bits/stdc++.h>
+using namespace std;
 
 // City class
 class City {
-    private String name;
-
-    public City(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-}
+    string name;
+public:
+    City(string name) : name(name) {}
+    string getName() { return name; }
+};
 
 // CinemaHallSeat class
 class CinemaHallSeat {
-    private int seatNumber;
-    private boolean isReserved;
+    int seatNumber;
+    bool isReserved;
+public:
+    CinemaHallSeat(int number) : seatNumber(number), isReserved(false) {}
 
-    public CinemaHallSeat(int number) {
-        this.seatNumber = number;
-        this.isReserved = false;
-    }
+    int getSeatNumber() { return seatNumber; }
+    bool isSeatReserved() { return isReserved; }
 
-    public int getSeatNumber() {
-        return seatNumber;
-    }
-
-    public boolean isSeatReserved() {
-        return isReserved;
-    }
-
-    public void reserve() {
-        isReserved = true;
-    }
-
-    public void release() {
-        isReserved = false;
-    }
-}
+    void reserve() { isReserved = true; }
+    void release() { isReserved = false; }
+};
 
 // CinemaHall class
 class CinemaHall {
-    private List<CinemaHallSeat> seats;
-    private String hallName;
-
-    public CinemaHall(String name, int numSeats) {
-        this.hallName = name;
-        seats = new ArrayList<>();
+    vector<CinemaHallSeat> seats;
+    string hallName;
+public:
+    CinemaHall(string name, int numSeats) : hallName(name) {
         for (int i = 1; i <= numSeats; ++i) {
-            seats.add(new CinemaHallSeat(i));
+            seats.emplace_back(i);
         }
     }
 
-    public void showSeatingArrangement() {
-        for (CinemaHallSeat seat : seats) {
-            System.out.println("Seat " + seat.getSeatNumber() + (seat.isSeatReserved() ? " (Reserved)" : " (Available)"));
+    void showSeatingArrangement() {
+        for (auto& seat : seats) {
+            cout << "Seat " << seat.getSeatNumber()
+                 << (seat.isSeatReserved() ? " (Reserved)" : " (Available)") << endl;
         }
     }
 
-    public boolean reserveSeat(int seatNumber) {
-        for (CinemaHallSeat seat : seats) {
+    bool reserveSeat(int seatNumber) {
+        for (auto& seat : seats) {
             if (seat.getSeatNumber() == seatNumber && !seat.isSeatReserved()) {
                 seat.reserve();
                 return true;
@@ -127,8 +51,8 @@ class CinemaHall {
         return false;
     }
 
-    public void releaseSeat(int seatNumber) {
-        for (CinemaHallSeat seat : seats) {
+    void releaseSeat(int seatNumber) {
+        for (auto& seat : seats) {
             if (seat.getSeatNumber() == seatNumber) {
                 seat.release();
                 break;
@@ -136,428 +60,219 @@ class CinemaHall {
         }
     }
 
-    public String getHallName() {
-        return hallName;
-    }
-}
+    string getHallName() { return hallName; }
+};
 
 // Show class
 class Show {
-    private CinemaHall hall;
-    private String movieTitle;
-    private Date showTime;
+    CinemaHall* hall;
+    string movieTitle;
+    time_t showTime;
+public:
+    Show(CinemaHall* hall, string movieTitle, time_t showTime)
+        : hall(hall), movieTitle(movieTitle), showTime(showTime) {}
 
-    public Show(CinemaHall hall, String movieTitle, Date showTime) {
-        this.hall = hall;
-        this.movieTitle = movieTitle;
-        this.showTime = showTime;
-    }
-
-    public CinemaHall getHall() {
-        return hall;
-    }
-
-    public String getMovieTitle() {
-        return movieTitle;
-    }
-
-    public Date getShowTime() {
-        return showTime;
-    }
-}
+    CinemaHall* getHall() { return hall; }
+    string getMovieTitle() { return movieTitle; }
+    time_t getShowTime() { return showTime; }
+};
 
 // Movie class
 class Movie {
-    private String title;
-    private String genre;
-    private String language;
-    private String releaseDate;
-    private List<Show> shows;
+    string title, genre, language, releaseDate;
+    vector<Show*> shows;
+public:
+    Movie(string title, string genre, string language, string releaseDate)
+        : title(title), genre(genre), language(language), releaseDate(releaseDate) {}
 
-    public Movie(String title, String genre, String language, String releaseDate) {
-        this.title = title;
-        this.genre = genre;
-        this.language = language;
-        this.releaseDate = releaseDate;
-        shows = new ArrayList<>();
-    }
+    void addShow(Show* show) { shows.push_back(show); }
+    vector<Show*> getShows() { return shows; }
 
-    public void addShow(Show show) {
-        shows.add(show);
-    }
+    string getTitle() { return title; }
+    string getGenre() { return genre; }
+    string getLanguage() { return language; }
+    string getReleaseDate() { return releaseDate; }
 
-    public List<Show> getShows() {
-        return shows;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public String getLanguage() {
-        return language;
-    }
-
-    public String getReleaseDate() {
-        return releaseDate;
-    }
-
-    public static List<Movie> searchMovies(List<Movie> movies, String title, String genre, String language, String releaseDate) {
-        List<Movie> results = new ArrayList<>();
-        for (Movie movie : movies) {
-            if ((title.isEmpty() || movie.getTitle().equals(title)) &&
-                (genre.isEmpty() || movie.getGenre().equals(genre)) &&
-                (language.isEmpty() || movie.getLanguage().equals(language)) &&
-                (releaseDate.isEmpty() || movie.getReleaseDate().equals(releaseDate))) {
-                results.add(movie);
+    static vector<Movie*> searchMovies(vector<Movie*>& movies, string title, string genre,
+                                       string language, string releaseDate) {
+        vector<Movie*> results;
+        for (auto& movie : movies) {
+            if ((title.empty() || movie->getTitle() == title) &&
+                (genre.empty() || movie->getGenre() == genre) &&
+                (language.empty() || movie->getLanguage() == language) &&
+                (releaseDate.empty() || movie->getReleaseDate() == releaseDate)) {
+                results.push_back(movie);
             }
         }
         return results;
     }
-}
+};
 
 // Cinema class
 class Cinema {
-    private List<CinemaHall> halls;
-    private City city;
+    vector<CinemaHall*> halls;
+    City city;
+public:
+    Cinema(City city) : city(city) {}
 
-    public Cinema(City city) {
-        this.city = city;
-        halls = new ArrayList<>();
-    }
-
-    public void addHall(CinemaHall hall) {
-        halls.add(hall);
-    }
-
-    public List<CinemaHall> getHalls() {
-        return halls;
-    }
-
-    public City getCity() {
-        return city;
-    }
-}
-
-// Booking abstract class
-abstract class Booking {
-    protected Show show;
-    protected int seatNumber;
-
-    public Booking(Show show, int seatNumber) {
-        this.show = show;
-        this.seatNumber = seatNumber;
-    }
-
-    public abstract boolean reserve();
-    public abstract void cancel();
-}
-
-// BasicBooking class
-class BasicBooking extends Booking {
-
-    public BasicBooking(Show show, int seatNumber) {
-        super(show, seatNumber);
-    }
-
-    @Override
-    public boolean reserve() {
-        return show.getHall().reserveSeat(seatNumber);
-    }
-
-    @Override
-    public void cancel() {
-        show.getHall().releaseSeat(seatNumber);
-    }
-}
-
-// BookingDecorator class
-abstract class BookingDecorator extends Booking {
-    protected Booking decoratedBooking;
-
-    public BookingDecorator(Booking booking) {
-        super(booking.show, booking.seatNumber);
-        this.decoratedBooking = booking;
-    }
-
-    @Override
-    public boolean reserve() {
-        return decoratedBooking.reserve();
-    }
-
-    @Override
-    public void cancel() {
-        decoratedBooking.cancel();
-    }
-}
-
-// PremiumBookingDecorator class
-class PremiumBookingDecorator extends BookingDecorator {
-
-    public PremiumBookingDecorator(Booking booking) {
-        super(booking);
-    }
-
-    @Override
-    public boolean reserve() {
-        System.out.println("Adding premium features to booking.");
-        return super.reserve();
-    }
-}
+    void addHall(CinemaHall* hall) { halls.push_back(hall); }
+    vector<CinemaHall*> getHalls() { return halls; }
+    City getCity() { return city; }
+};
 
 // PaymentStrategy interface
-interface PaymentStrategy {
-    void pay(double amount);
-}
+class PaymentStrategy {
+public:
+    virtual void pay(double amount) = 0;
+    virtual ~PaymentStrategy() {}
+};
 
 // CreditCardPayment class
-class CreditCardPayment implements PaymentStrategy {
-    @Override
-    public void pay(double amount) {
-        System.out.println("Paid " + amount + " using Credit Card.");
+class CreditCardPayment : public PaymentStrategy {
+public:
+    void pay(double amount) override {
+        cout << "Paid " << amount << " using Credit Card." << endl;
     }
-}
+};
 
 // CashPayment class
-class CashPayment implements PaymentStrategy {
-    @Override
-    public void pay(double amount) {
-        System.out.println("Paid " + amount + " using Cash.");
+class CashPayment : public PaymentStrategy {
+public:
+    void pay(double amount) override {
+        cout << "Paid " << amount << " using Cash." << endl;
     }
-}
+};
 
 // Payment class
 class Payment {
-    private PaymentStrategy strategy;
-    private double amount;
+    unique_ptr<PaymentStrategy> strategy;
+    double amount;
+public:
+    Payment(unique_ptr<PaymentStrategy> strategy, double amount)
+        : strategy(move(strategy)), amount(amount) {}
 
-    public Payment(PaymentStrategy strategy, double amount) {
-        this.strategy = strategy;
-        this.amount = amount;
-    }
+    void process() { strategy->pay(amount); }
+};
 
-    public void process() {
-        strategy.pay(amount);
-    }
-}
+int main() {
+    // Setup example data
+    City city("New York");
+    Cinema cinema(city);
 
-// Notification class
-class Notification {
-    private String message;
+    // Adding Cinema Halls
+    CinemaHall* hall1 = new CinemaHall("Hall 1", 10); // Reduced seats for simplicity
+    CinemaHall* hall2 = new CinemaHall("Hall 2", 15);
 
-    public Notification(String message) {
-        this.message = message;
-    }
+    cinema.addHall(hall1);
+    cinema.addHall(hall2);
 
-    public void send() {
-        System.out.println("Notification: " + message);
-    }
-}
+    // Adding Movies and Shows
+    Movie* movie1 = new Movie("Movie 1", "Action", "English", "2024-08-01");
+    Movie* movie2 = new Movie("Movie 2", "Drama", "English", "2024-09-01");
 
-// NotificationManager singleton class
-class NotificationManager {
-    private static NotificationManager instance;
-    private List<Notification> notifications;
+    Show* show1 = new Show(hall1, movie1->getTitle(), time(nullptr));
+    Show* show2 = new Show(hall2, movie2->getTitle(), time(nullptr) + 86400); // 1 day later
 
-    private NotificationManager() {
-        notifications = new ArrayList<>();
-    }
+    movie1->addShow(show1);
+    movie2->addShow(show2);
 
-    public static NotificationManager getInstance() {
-        if (instance == null) {
-            instance = new NotificationManager();
-        }
-        return instance;
-    }
+    // Display seating arrangement for Hall 1
+    cout << "\nSeating arrangement for " << hall1->getHallName() << ":\n";
+    hall1->showSeatingArrangement();
 
-    public void addNotification(Notification notification) {
-        notifications.add(notification);
-        notification.send();
-    }
-}
+    // Reserve a few seats in Hall 1
+    cout << "\nReserving seats 1 and 2 in " << hall1->getHallName() << "...\n";
+    if (hall1->reserveSeat(1)) cout << "Seat 1 reserved successfully.\n";
+    if (hall1->reserveSeat(2)) cout << "Seat 2 reserved successfully.\n";
 
-// Observer interface
-interface Observer {
-    void update(String message);
-}
+    // Show updated seating arrangement
+    cout << "\nUpdated seating arrangement for " << hall1->getHallName() << ":\n";
+    hall1->showSeatingArrangement();
 
-// Subject class
-class Subject {
-    private List<Observer> observers;
+    // Release a seat in Hall 1
+    cout << "\nReleasing seat 1 in " << hall1->getHallName() << "...\n";
+    hall1->releaseSeat(1);
 
-    public Subject() {
-        observers = new ArrayList<>();
-    }
+    // Show final seating arrangement
+    cout << "\nFinal seating arrangement for " << hall1->getHallName() << ":\n";
+    hall1->showSeatingArrangement();
 
-    public void addObserver(Observer observer) {
-        observers.add(observer);
-    }
-
-    public void removeObserver(Observer observer) {
-        observers.remove(observer);
-    }
-
-    public void notifyObservers(String message) {
-        for (Observer observer : observers) {
-            observer.update(message);
+    // Show information about movies and their shows
+    cout << "\nMovies and their shows:\n";
+    vector<Movie*> movies = {movie1, movie2};
+    for (auto& movie : movies) {
+        cout << "Movie: " << movie->getTitle() << " (" << movie->getGenre() << ", " << movie->getLanguage() << ", " << movie->getReleaseDate() << ")\n";
+        for (auto& show : movie->getShows()) {
+            cout << "  Show in " << show->getHall()->getHallName() << " at " << ctime(&show->getShowTime());
         }
     }
+
+    // Strategy Pattern: Payment
+    cout << "\nProcessing payment:\n";
+    unique_ptr<PaymentStrategy> paymentMethod = make_unique<CreditCardPayment>();
+    Payment payment(move(paymentMethod), 150.0);
+    payment.process();
+
+    // Clean up
+    delete hall1;
+    delete hall2;
+    delete movie1;
+    delete movie2;
+    delete show1;
+    delete show2;
+
+    return 0;
 }
 
-// CustomerObserver class
-class CustomerObserver implements Observer {
-    private String name;
+Output:
+Seating arrangement for Hall 1:
+Seat 1 (Available)
+Seat 2 (Available)
+Seat 3 (Available)
+Seat 4 (Available)
+Seat 5 (Available)
+Seat 6 (Available)
+Seat 7 (Available)
+Seat 8 (Available)
+Seat 9 (Available)
+Seat 10 (Available)
 
-    public CustomerObserver(String name) {
-        this.name = name;
-    }
+Reserving seats 1 and 2 in Hall 1...
+Seat 1 reserved successfully.
+Seat 2 reserved successfully.
 
-    @Override
-    public void update(String message) {
-        System.out.println("Customer " + name + " received notification: " + message);
-    }
-}
+Updated seating arrangement for Hall 1:
+Seat 1 (Reserved)
+Seat 2 (Reserved)
+Seat 3 (Available)
+Seat 4 (Available)
+Seat 5 (Available)
+Seat 6 (Available)
+Seat 7 (Available)
+Seat 8 (Available)
+Seat 9 (Available)
+Seat 10 (Available)
 
-// AdminObserver class
-class AdminObserver implements Observer {
-    private String name;
+Releasing seat 1 in Hall 1...
 
-    public AdminObserver(String name) {
-        this.name = name;
-    }
+Final seating arrangement for Hall 1:
+Seat 1 (Available)
+Seat 2 (Reserved)
+Seat 3 (Available)
+Seat 4 (Available)
+Seat 5 (Available)
+Seat 6 (Available)
+Seat 7 (Available)
+Seat 8 (Available)
+Seat 9 (Available)
+Seat 10 (Available)
 
-    @Override
-    public void update(String message) {
-        System.out.println("Admin " + name + " received notification: " + message);
-    }
-}
+Movies and their shows:
+Movie: Movie 1 (Action, English, 2024-08-01)
+  Show in Hall 1 at Fri Nov 29 12:00:00 2024
+Movie: Movie 2 (Drama, English, 2024-09-01)
+  Show in Hall 2 at Sat Nov 30 12:00:00 2024
 
-// Account abstract class
-abstract class Account {
-    protected String username;
-    protected String password;
+Processing payment:
+Paid 150 using Credit Card.
 
-    public abstract void login();
-    public abstract void logout();
-}
-
-// Customer class
-class Customer extends Account {
-    @Override
-    public void login() {
-        System.out.println("Customer logged in: " + username);
-    }
-
-    @Override
-    public void logout() {
-        System.out.println("Customer logged out: " + username);
-    }
-}
-
-// Admin class
-class Admin extends Account {
-    @Override
-    public void login() {
-        System.out.println("Admin logged in: " + username);
-    }
-
-    @Override
-    public void logout() {
-        System.out.println("Admin logged out: " + username);
-    }
-}
-
-// Guest class
-class Guest extends Account {
-    @Override
-    public void login() {
-        System.out.println("Guest logged in: " + username);
-    }
-
-    @Override
-    public void logout() {
-        System.out.println("Guest logged out: " + username);
-    }
-}
-
-// AccountFactory class
-class AccountFactory {
-    enum AccountType { CUSTOMER, ADMIN, GUEST }
-
-    public static Account createAccount(AccountType type) {
-        switch (type) {
-            case CUSTOMER:
-                return new Customer();
-            case ADMIN:
-                return new Admin();
-            case GUEST:
-                return new Guest();
-            default:
-                return null;
-        }
-    }
-}
-
-// Main class
-public class Main {
-    public static void main(String[] args) {
-        // Setup example data
-        City city = new City("New York");
-        Cinema cinema = new Cinema(city);
-        CinemaHall hall1 = new CinemaHall("Hall 1", 50);
-        CinemaHall hall2 = new CinemaHall("Hall 2", 75);
-        cinema.addHall(hall1);
-        cinema.addHall(hall2);
-
-        Movie movie1 = new Movie("Movie 1", "Action", "English", "2024-08-01");
-        Movie movie2 = new Movie("Movie 2", "Drama", "English", "2024-09-01");
-
-        Show show1 = new Show(hall1, movie1.getTitle(), new Date());
-        Show show2 = new Show(hall2, movie2.getTitle(), new Date(System.currentTimeMillis() + 86400000L)); // 1 day later
-
-        movie1.addShow(show1);
-        movie2.addShow(show2);
-
-        // Singleton Pattern
-        NotificationManager nm = NotificationManager.getInstance();
-        nm.addNotification(new Notification("New movie released!"));
-
-        // Factory Method Pattern
-        Account customer = AccountFactory.createAccount(AccountFactory.AccountType.CUSTOMER);
-        customer.login();
-        customer.logout();
-
-        // Observer Pattern
-        Subject subject = new Subject();
-        CustomerObserver cust1 = new CustomerObserver("Alice");
-        AdminObserver admin1 = new AdminObserver("Bob");
-        subject.addObserver(cust1);
-        subject.addObserver(admin1);
-        subject.notifyObservers("New show available!");
-
-        // Strategy Pattern
-        PaymentStrategy paymentMethod = new CreditCardPayment();
-        Payment payment = new Payment(paymentMethod, 100.0);
-        payment.process();
-
-        // Decorator Pattern
-        Booking basicBooking = new BasicBooking(show1, 10);
-        Booking premiumBooking = new PremiumBookingDecorator(basicBooking);
-        premiumBooking.reserve(); // Correct method call
-
-        // Booking example
-        if (basicBooking.reserve()) {
-            System.out.println("Seat reserved successfully!");
-        } else {
-            System.out.println("Failed to reserve seat.");
-        }
-
-        // Cancel booking
-        basicBooking.cancel();
-        System.out.println("Seat reservation canceled.");
-    }
-}
