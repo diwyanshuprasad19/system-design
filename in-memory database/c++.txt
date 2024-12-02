@@ -105,37 +105,52 @@ public:
             cout << "Table " << tableName << " already exists!\n";
             return;
         }
-        tables[tableName] = make_unique<Table>(tableName, columns);
+        tables[tableName] = Table(tableName, columns);
     }
 
     void dropTable(const string& tableName) {
+        if (tables.find(tableName) == tables.end()) {
+            cout << "Table " << tableName << " does not exist!\n";
+            return;
+        }
         tables.erase(tableName);
     }
 
     void insertRow(const string& tableName, const map<Column, string>& columnValues) {
-        auto tableIt = tables.find(tableName);
-        if (tableIt != tables.end()) {
-            tableIt->second->insertRow(columnValues);
+        if (tables.find(tableName) != tables.end()) {
+            tables[tableName].insertRow(columnValues);
         }
     }
 
     void printTable(const string& tableName) const {
-        auto tableIt = tables.find(tableName);
-        if (tableIt != tables.end()) {
-            tableIt->second->printRows();
+        auto it = tables.find(tableName);
+        if (it != tables.end()) {
+            it->second.printRows();
+        } else {
+            cout << "Table " << tableName << " does not exist!\n";
         }
     }
 
     void filterTable(const string& tableName, const Column& column, const string& value) const {
-        auto tableIt = tables.find(tableName);
-        if (tableIt != tables.end()) {
-            tableIt->second->filterRows(column, value);
+        auto it = tables.find(tableName);
+        if (it != tables.end()) {
+            it->second.filterRows(column, value);
+        } else {
+            cout << "Table " << tableName << " does not exist!\n";
+        }
+    }
+
+    void truncate(const string& tableName) {
+        if (tables.find(tableName) != tables.end()) {
+            tables[tableName].truncate();
+        } else {
+            cout << "Table " << tableName << " does not exist!\n";
         }
     }
 
 private:
     string dbName;
-    unordered_map<string, unique_ptr<Table>> tables;
+    unordered_map<string, Table> tables;
 };
 
 // Main Function
@@ -154,11 +169,22 @@ int main() {
     map<Column, string> row2 = {{name, "Kim"}, {age, "28"}, {salary, "12000"}};
     db.insertRow("Employee", row2);
 
+    cout << "All rows in Employee table:\n";
     db.printTable("Employee");
+
+    cout << "\nFilter rows where age = 28:\n";
     db.filterTable("Employee", age, "28");
+
+    cout << "\nFilter rows where name = John:\n";
+    db.filterTable("Employee", name, "John");
+
+    cout << "\nTruncate the table and print rows:\n";
+    db.truncate("Employee");
+    db.printTable("Employee");
 
     return 0;
 }
+
 
 Output:
 All rows in Employee table:
