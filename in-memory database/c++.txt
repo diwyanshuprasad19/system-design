@@ -1,3 +1,4 @@
+docs:https://docs.google.com/document/d/1arVRTxnOpHe0pkYAqZI7K03y4ycd6UpMsRomaQV8JXE/edit?tab=t.0
 
 #include <bits/stdc++.h>
 using namespace std;
