@@ -1,1 +1,177 @@
 
+#include <bits/stdc++.h>
+using namespace std;
+
+// Column Class
+class Column {
+public:
+    enum Type { INT, STRING };
+
+    Column(string name, Type type) : columnName(name), columnType(type) {}
+
+    string getColumnName() const {
+        return columnName;
+    }
+
+    Type getColumnType() const {
+        return columnType;
+    }
+
+    bool operator<(const Column& other) const {
+        return columnName < other.columnName;
+    }
+
+private:
+    string columnName;
+    Type columnType;
+};
+
+// Row Class
+class Row {
+public:
+    Row(int id, const map<Column, string>& data) : rowId(id), columnData(data) {}
+
+    int getRowId() const {
+        return rowId;
+    }
+
+    const map<Column, string>& getColumnData() const {
+        return columnData;
+    }
+
+private:
+    int rowId;
+    map<Column, string> columnData;
+};
+
+// Table Class
+class Table {
+public:
+    Table(string name, const vector<Column>& cols) 
+        : tableName(name), autoIncrementId(1) {
+        for (const auto& col : cols) {
+            columns.push_back(col);
+        }
+    }
+
+    void insertRow(const map<Column, string>& columnValues) {
+        rows.emplace_back(autoIncrementId++, columnValues);
+    }
+
+    void printRows() const {
+        cout << "Table: " << tableName << "\n";
+        for (const auto& row : rows) {
+            cout << "Row ID: " << row.getRowId() << " | ";
+            for (const auto& [col, val] : row.getColumnData()) {
+                cout << col.getColumnName() << ": " << val << " ";
+            }
+            cout << "\n";
+        }
+    }
+
+    void filterRows(const Column& column, const string& value) const {
+        cout << "Filtering rows where " << column.getColumnName() << " = " << value << "\n";
+        for (const auto& row : rows) {
+            auto it = row.getColumnData().find(column);
+            if (it != row.getColumnData().end() && it->second == value) {
+                cout << "Row ID: " << row.getRowId() << " | ";
+                for (const auto& [col, val] : row.getColumnData()) {
+                    cout << col.getColumnName() << ": " << val << " ";
+                }
+                cout << "\n";
+            }
+        }
+    }
+
+    void truncate() {
+        rows.clear();
+    }
+
+private:
+    string tableName;
+    vector<Column> columns;
+    vector<Row> rows;
+    int autoIncrementId;
+};
+
+// Database Class
+class Database {
+public:
+    explicit Database(string name) : dbName(name) {}
+
+    void createTable(const string& tableName, const vector<Column>& columns) {
+        if (tables.find(tableName) != tables.end()) {
+            cout << "Table " << tableName << " already exists!\n";
+            return;
+        }
+        tables[tableName] = make_unique<Table>(tableName, columns);
+    }
+
+    void dropTable(const string& tableName) {
+        tables.erase(tableName);
+    }
+
+    void insertRow(const string& tableName, const map<Column, string>& columnValues) {
+        auto tableIt = tables.find(tableName);
+        if (tableIt != tables.end()) {
+            tableIt->second->insertRow(columnValues);
+        }
+    }
+
+    void printTable(const string& tableName) const {
+        auto tableIt = tables.find(tableName);
+        if (tableIt != tables.end()) {
+            tableIt->second->printRows();
+        }
+    }
+
+    void filterTable(const string& tableName, const Column& column, const string& value) const {
+        auto tableIt = tables.find(tableName);
+        if (tableIt != tables.end()) {
+            tableIt->second->filterRows(column, value);
+        }
+    }
+
+private:
+    string dbName;
+    unordered_map<string, unique_ptr<Table>> tables;
+};
+
+// Main Function
+int main() {
+    Column name("name", Column::STRING);
+    Column age("age", Column::INT);
+    Column salary("salary", Column::INT);
+
+    Database db("MyDB");
+    vector<Column> columns = {name, age, salary};
+    db.createTable("Employee", columns);
+
+    map<Column, string> row1 = {{name, "John"}, {age, "25"}, {salary, "10000"}};
+    db.insertRow("Employee", row1);
+
+    map<Column, string> row2 = {{name, "Kim"}, {age, "28"}, {salary, "12000"}};
+    db.insertRow("Employee", row2);
+
+    db.printTable("Employee");
+    db.filterTable("Employee", age, "28");
+
+    return 0;
+}
+
+Output:
+All rows in Employee table:
+Table: Employee
+Row ID: 1 | name: John age: 25 salary: 10000 
+Row ID: 2 | name: Kim age: 28 salary: 12000 
+
+Filter rows where age = 28:
+Filtering rows where age = 28
+Row ID: 2 | name: Kim age: 28 salary: 12000 
+
+Filter rows where name = John:
+Filtering rows where name = John
+Row ID: 1 | name: John age: 25 salary: 10000 
+
+Truncate the table and print rows:
+Table: Employee
