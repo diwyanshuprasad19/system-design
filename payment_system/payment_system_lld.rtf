@@ -1,0 +1,966 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2759
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\froman\fcharset0 Times-Bold;
+\f3\fmodern\fcharset0 Courier;\f4\fnil\fcharset0 Menlo-Regular;\f5\fnil\fcharset0 LucidaGrande;
+\f6\fnil\fcharset0 LucidaGrande-Bold;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red109\green109\blue109;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c50196\c50196\c50196;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid2\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid102\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid202\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid203\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li2160\lin2160 }{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid301\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid302\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid4}
+{\list\listtemplateid5\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid401\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid402\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid5}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}{\listoverride\listid5\listoverridecount0\ls5}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww33100\viewh20700\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 https://docs.google.com/document/d/1Wj383Yl6YAbrD7sMUiAKvbOmuFNbneIkeWYjLvw7YOk/edit?tab=t.0\
+\
+Article:https://leetcode.com/discuss/interview-question/object-oriented-design/3846271/LLD-or-Design-a-Payment-Gateway\
+\
+\
+\
+\
+\
+\
+\
+****************************************************************************************************\
+\
+Basic Code:\
+#include <bits/stdc++.h>\
+\
+using namespace std;\
+\
+// Bank Class\
+class Bank \{\
+    string name;\
+\
+public:\
+    Bank(const string& bankName) : name(bankName) \{\
+        srand(time(0)); // Seed random generator\
+    \}\
+\
+    bool processTransaction() \{\
+        return rand() % 2 == 0; // Random success/failure\
+    \}\
+\
+    string getName() const \{\
+        return name;\
+    \}\
+\};\
+\
+// Payment Strategy Interface\
+class PaymentStrategy \{\
+public:\
+    virtual bool validateDetails(const unordered_map<string, string>& details) = 0;\
+    virtual bool processPayment(Bank& bank, const unordered_map<string, string>& details) = 0;\
+    virtual ~PaymentStrategy() = default;\
+\};\
+\
+// UPI Payment Strategy\
+class UpiPayment : public PaymentStrategy \{\
+public:\
+    bool validateDetails(const unordered_map<string, string>& details) override \{\
+        return details.find("upi_pin") != details.end();\
+    \}\
+\
+    bool processPayment(Bank& bank, const unordered_map<string, string>& details) override \{\
+        if (!validateDetails(details)) \{\
+            cout << "UPI Payment failed: Missing UPI PIN.\\n";\
+            return false;\
+        \}\
+        return bank.processTransaction();\
+    \}\
+\};\
+\
+// Netbanking Payment Strategy\
+class NetbankingPayment : public PaymentStrategy \{\
+public:\
+    bool validateDetails(const unordered_map<string, string>& details) override \{\
+        return details.find("user_id") != details.end() && details.find("password") != details.end();\
+    \}\
+\
+    bool processPayment(Bank& bank, const unordered_map<string, string>& details) override \{\
+        if (!validateDetails(details)) \{\
+            cout << "Netbanking Payment failed: Missing user ID or password.\\n";\
+            return false;\
+        \}\
+        return bank.processTransaction();\
+    \}\
+\};\
+\
+// Client Class\
+class Client \{\
+    string name;\
+    unordered_set<string> paymentModes;\
+\
+public:\
+    Client(const string& clientName) : name(clientName) \{\}\
+\
+    void addPaymentMode(const string& mode) \{\
+        paymentModes.insert(mode);\
+    \}\
+\
+    void removePaymentMode(const string& mode) \{\
+        paymentModes.erase(mode);\
+    \}\
+\
+    bool supportsPaymentMode(const string& mode) const \{\
+        return paymentModes.find(mode) != paymentModes.end();\
+    \}\
+\
+    string getName() const \{\
+        return name;\
+    \}\
+\
+    unordered_set<string> getPaymentModes() const \{\
+        return paymentModes;\
+    \}\
+\};\
+\
+// Payment Gateway Class\
+class PaymentGateway \{\
+    unordered_map<string, Client> clients;\
+    vector<Bank> banks;\
+    PaymentStrategy* strategy;\
+\
+public:\
+    PaymentGateway() : strategy(nullptr) \{\}\
+\
+    void addClient(const string& clientName) \{\
+        clients[clientName] = Client(clientName);\
+    \}\
+\
+    void removeClient(const string& clientName) \{\
+        clients.erase(clientName);\
+    \}\
+\
+    bool hasClient(const string& clientName) \{\
+        return clients.find(clientName) != clients.end();\
+    \}\
+\
+    void addPaymentModeToClient(const string& clientName, const string& mode) \{\
+        if (clients.find(clientName) != clients.end()) \{\
+            clients[clientName].addPaymentMode(mode);\
+        \}\
+    \}\
+\
+    void removePaymentModeFromClient(const string& clientName, const string& mode) \{\
+        if (clients.find(clientName) != clients.end()) \{\
+            clients[clientName].removePaymentMode(mode);\
+        \}\
+    \}\
+\
+    void listSupportedPaymodes(const string& clientName) \{\
+        if (clients.find(clientName) == clients.end()) \{\
+            cout << "Client not found.\\n";\
+            return;\
+        \}\
+        cout << "Supported payment modes for " << clientName << ": ";\
+        for (const auto& mode : clients[clientName].getPaymentModes()) \{\
+            cout << mode << " ";\
+        \}\
+        cout << endl;\
+    \}\
+\
+    void setPaymentStrategy(PaymentStrategy* newStrategy) \{\
+        strategy = newStrategy;\
+    \}\
+\
+    void addBank(const string& bankName) \{\
+        banks.emplace_back(bankName);\
+    \}\
+\
+    void processPayment(const string& clientName, const unordered_map<string, string>& details) \{\
+        if (!hasClient(clientName)) \{\
+            cout << "Client not found.\\n";\
+            return;\
+        \}\
+\
+        if (!strategy) \{\
+            cout << "Payment strategy not set.\\n";\
+            return;\
+        \}\
+\
+        const string& paymentType = details.at("type");\
+        if (!clients[clientName].supportsPaymentMode(paymentType)) \{\
+            cout << "Payment mode not supported by client.\\n";\
+            return;\
+        \}\
+\
+        if (banks.empty()) \{\
+            cout << "No banks available for payment processing.\\n";\
+            return;\
+        \}\
+\
+        // Always select the first bank for simplicity\
+        Bank& selectedBank = banks.front();\
+        if (strategy->processPayment(selectedBank, details)) \{\
+            cout << "Payment successful via " << selectedBank.getName() << ".\\n";\
+        \} else \{\
+            cout << "Payment failed via " << selectedBank.getName() << ".\\n";\
+        \}\
+    \}\
+\};\
+\
+// Main Function\
+int main() \{\
+    cout << "==================== Payment Gateway Simulation ====================" << endl;\
+\
+    PaymentGateway gateway;\
+\
+    // Add clients\
+    cout << "\\nAdding Clients to Payment Gateway..." << endl;\
+    gateway.addClient("Flipkart");\
+    cout << "Client 'Flipkart' added." << endl;\
+    gateway.addClient("Amazon");\
+    cout << "Client 'Amazon' added." << endl;\
+\
+    // Add banks\
+    cout << "\\nIntegrating Banks into Payment Gateway..." << endl;\
+    gateway.addBank("HDFC");\
+    cout << "Bank 'HDFC' added." << endl;\
+    gateway.addBank("ICICI");\
+    cout << "Bank 'ICICI' added." << endl;\
+\
+    // Add payment modes to clients\
+    cout << "\\nAdding Payment Modes to Clients..." << endl;\
+    gateway.addPaymentModeToClient("Flipkart", "UPI");\
+    cout << "Payment mode 'UPI' added for 'Flipkart'." << endl;\
+    gateway.addPaymentModeToClient("Amazon", "Netbanking");\
+    cout << "Payment mode 'Netbanking' added for 'Amazon'." << endl;\
+\
+    // List supported payment modes\
+    cout << "\\nListing Supported Payment Modes for Clients..." << endl;\
+    gateway.listSupportedPaymodes("Flipkart");\
+    gateway.listSupportedPaymodes("Amazon");\
+\
+    // Process UPI Payment\
+    cout << "\\n=== Processing UPI Payment for Flipkart ===" << endl;\
+    UpiPayment upiStrategy;\
+    gateway.setPaymentStrategy(&upiStrategy);\
+    unordered_map<string, string> upiDetails = \{\{"type", "UPI"\}, \{"upi_pin", "1234"\}\};\
+    gateway.processPayment("Flipkart", upiDetails);\
+\
+    // Attempt UPI Payment with invalid details\
+    cout << "\\n=== Attempting UPI Payment for Flipkart with Missing Details ===" << endl;\
+    unordered_map<string, string> invalidUpiDetails = \{\{"type", "UPI"\}\};\
+    gateway.processPayment("Flipkart", invalidUpiDetails);\
+\
+    // Process Netbanking Payment\
+    cout << "\\n=== Processing Netbanking Payment for Amazon ===" << endl;\
+    NetbankingPayment netbankingStrategy;\
+    gateway.setPaymentStrategy(&netbankingStrategy);\
+    unordered_map<string, string> netbankingDetails = \{\{"type", "Netbanking"\}, \{"user_id", "user123"\}, \{"password", "pass123"\}\};\
+    gateway.processPayment("Amazon", netbankingDetails);\
+\
+    cout << "\\n==================== Simulation Complete ====================" << endl;\
+\
+    return 0;\
+\}\
+\
+Design pattern used above:\
+\pard\pardeftab720\partightenfactor0
+
+\f1 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 The modified code (where the 
+\f2\b Router
+\f1\b0  class was removed) continues to follow several design patterns, albeit with fewer patterns than the original version. Here's an analysis of the 
+\f2\b design patterns used in the updated code
+\f1\b0 :\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 1. Strategy Pattern\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls1\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Where it's used
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1
+\f3\fs26 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9702 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 PaymentStrategy
+\f1\fs24  is an interface for payment methods.\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Concrete implementations like 
+\f3\fs26 UpiPayment
+\f1\fs24  and 
+\f3\fs26 NetbankingPayment
+\f1\fs24  provide specific payment processing logic.\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls1\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 How it works
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The 
+\f3\fs26 PaymentGateway
+\f1\fs24  delegates payment processing to a dynamically selected 
+\f3\fs26 PaymentStrategy
+\f1\fs24 .\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The strategy can be set using 
+\f3\fs26 setPaymentStrategy()
+\f1\fs24 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls1\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Advantages
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Allows adding new payment strategies without modifying existing code.\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Keeps the 
+\f3\fs26 PaymentGateway
+\f1\fs24  class agnostic of specific payment method details.\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 2. Command Pattern\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls2\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Where it's used
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls2\ilvl1
+\f3\fs26 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9702 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 processPayment
+\f1\fs24  method in 
+\f3\fs26 PaymentGateway
+\f1\fs24 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls2\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 How it works
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls2\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Encapsulates the payment process into a single method.\
+\ls2\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The method validates details, selects the bank (now always the first bank in the list), and processes the payment using the active 
+\f3\fs26 PaymentStrategy
+\f1\fs24 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls2\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Advantages
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls2\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Simplifies client interaction by encapsulating the payment execution logic.\
+\ls2\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Facilitates code reuse for payment processing.\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 3. Single Responsibility Principle (SRP)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls3\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Where it's applied
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls3\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Each class handles a single responsibility:\
+\pard\tx1660\tx2160\pardeftab720\li2160\fi-2160\partightenfactor0
+\ls3\ilvl2
+\f3\fs26 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9642 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Bank
+\f1\fs24 : Simulates a banking entity.\
+\ls3\ilvl2
+\f3\fs26 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9642 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Client
+\f1\fs24 : Manages the supported payment modes for each client.\
+\ls3\ilvl2
+\f3\fs26 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9642 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 PaymentStrategy
+\f1\fs24 : Encapsulates payment validation and processing logic.\
+\ls3\ilvl2
+\f3\fs26 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f4 \uc0\u9642 
+\f3 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 PaymentGateway
+\f1\fs24 : Coordinates the payment process.\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls3\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Advantages
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls3\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Makes the code easier to understand and maintain.\
+\ls3\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Enables changes to be localized to individual components.\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 4. Dependency Injection (DI)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls4\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Where it's applied
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls4\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The 
+\f3\fs26 PaymentGateway
+\f1\fs24  does not directly depend on specific payment strategies.\
+\ls4\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Strategies are injected dynamically using 
+\f3\fs26 setPaymentStrategy()
+\f1\fs24 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls4\ilvl0
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Advantages
+\f1\b0 :\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls4\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Decouples 
+\f3\fs26 PaymentGateway
+\f1\fs24  from specific payment implementations.\
+\ls4\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f5 \uc0\u9702 
+\f1 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Enables the 
+\f3\fs26 PaymentGateway
+\f1\fs24  to use different strategies at runtime.\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 What Was Removed?\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls5\ilvl0
+\f1\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The 
+\f2\b Router
+\f1\b0  class and its associated logic for traffic distribution were removed. This means:\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls5\ilvl1
+\f2\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f6 \uc0\u9702 
+\f2 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 No Weighted Random Selection
+\f1\b0 : Bank selection is now deterministic (always picks the first bank in the list).\
+\ls5\ilvl1
+\f2\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	
+\f6 \uc0\u9702 
+\f2 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 No Factory-Like Behavior
+\f1\b0 : The centralized routing configuration logic is no longer present.\
+\pard\pardeftab720\partightenfactor0
+\cf3 \strokec3 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f2\b\fs28 \cf0 \strokec2 Summary of Patterns in the Modified Code\
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth2233\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
+\clvertalc \clshdrawnil \clwWidth5299\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx5760
+\clvertalc \clshdrawnil \clwWidth5011\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\qc\partightenfactor0
+
+\fs24 \cf0 Pattern\cell 
+\pard\intbl\itap1\pardeftab720\qc\partightenfactor0
+\cf0 Used In\cell 
+\pard\intbl\itap1\pardeftab720\qc\partightenfactor0
+\cf0 Benefit\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth2233\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
+\clvertalc \clshdrawnil \clwWidth5299\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx5760
+\clvertalc \clshdrawnil \clwWidth5011\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Strategy Pattern
+\f1\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 PaymentStrategy
+\f1\fs24  and its subclasses\cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Flexible addition of payment methods.\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth2233\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
+\clvertalc \clshdrawnil \clwWidth5299\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx5760
+\clvertalc \clshdrawnil \clwWidth5011\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f2\b \cf0 Command Pattern
+\f1\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 processPayment
+\f1\fs24  in 
+\f3\fs26 PaymentGateway
+\f1\fs24 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Encapsulates payment execution logic.\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth2233\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
+\clvertalc \clshdrawnil \clwWidth5299\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx5760
+\clvertalc \clshdrawnil \clwWidth5011\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f2\b \cf0 Single Responsibility
+\f1\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 All classes\cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Clear separation of concerns.\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrt\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth2233\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
+\clvertalc \clshdrawnil \clwWidth5299\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx5760
+\clvertalc \clshdrawnil \clwWidth5011\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f2\b \cf0 Dependency Injection
+\f1\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 setPaymentStrategy
+\f1\fs24  in 
+\f3\fs26 PaymentGateway
+\f1\fs24 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Decouples payment gateway from specific methods.\cell \lastrow\row
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+************************************************************************************************************\
+\
+Code: more with route and selections\
+#include <bits/stdc++.h>\
+\
+using namespace std;\
+\
+// Bank Class\
+class Bank \{\
+    string name;\
+\
+public:\
+    Bank(const string& bankName) : name(bankName) \{\
+        srand(time(0)); // Seed random generator\
+    \}\
+\
+    bool processTransaction() \{\
+        return rand() % 2 == 0; // Random success/failure\
+    \}\
+\
+    string getName() const \{\
+        return name;\
+    \}\
+\};\
+\
+// Payment Strategy Interface\
+class PaymentStrategy \{\
+public:\
+    virtual bool validateDetails(const unordered_map<string, string>& details) = 0;\
+    virtual bool processPayment(Bank& bank, const unordered_map<string, string>& details) = 0;\
+    virtual ~PaymentStrategy() = default;\
+\};\
+\
+// UPI Payment Strategy\
+class UpiPayment : public PaymentStrategy \{\
+public:\
+    bool validateDetails(const unordered_map<string, string>& details) override \{\
+        return details.find("upi_pin") != details.end();\
+    \}\
+\
+    bool processPayment(Bank& bank, const unordered_map<string, string>& details) override \{\
+        if (!validateDetails(details)) \{\
+            cout << "UPI Payment failed: Missing UPI PIN.\\n";\
+            return false;\
+        \}\
+        return bank.processTransaction();\
+    \}\
+\};\
+\
+// Netbanking Payment Strategy\
+class NetbankingPayment : public PaymentStrategy \{\
+public:\
+    bool validateDetails(const unordered_map<string, string>& details) override \{\
+        return details.find("user_id") != details.end() && details.find("password") != details.end();\
+    \}\
+\
+    bool processPayment(Bank& bank, const unordered_map<string, string>& details) override \{\
+        if (!validateDetails(details)) \{\
+            cout << "Netbanking Payment failed: Missing user ID or password.\\n";\
+            return false;\
+        \}\
+        return bank.processTransaction();\
+    \}\
+\};\
+\
+// Client Class\
+class Client \{\
+    string name;\
+    unordered_set<string> paymentModes;\
+\
+public:\
+    Client(const string& clientName) : name(clientName) \{\}\
+\
+    void addPaymentMode(const string& mode) \{\
+        paymentModes.insert(mode);\
+    \}\
+\
+    void removePaymentMode(const string& mode) \{\
+        paymentModes.erase(mode);\
+    \}\
+\
+    bool supportsPaymentMode(const string& mode) const \{\
+        return paymentModes.find(mode) != paymentModes.end();\
+    \}\
+\
+    string getName() const \{\
+        return name;\
+    \}\
+\
+    unordered_set<string> getPaymentModes() const \{\
+        return paymentModes;\
+    \}\
+\};\
+\
+// Router Class for Bank Selection and Distribution\
+class Router \{\
+    unordered_map<string, vector<pair<Bank, int>>> routingTable; // Payment Type -> Banks with weights\
+\
+public:\
+    void addRoute(const string& paymentType, const Bank& bank, int weight) \{\
+        routingTable[paymentType].emplace_back(bank, weight);\
+    \}\
+\
+    Bank selectBank(const string& paymentType) \{\
+        if (routingTable.find(paymentType) == routingTable.end()) \{\
+            throw runtime_error("No routing available for payment type: " + paymentType);\
+        \}\
+\
+        // Weighted Random Selection\
+        vector<pair<Bank, int>>& banks = routingTable[paymentType];\
+        int totalWeight = 0;\
+        for (const auto& bank : banks) \{\
+            totalWeight += bank.second;\
+        \}\
+\
+        int randValue = rand() % totalWeight;\
+        for (const auto& bank : banks) \{\
+            if (randValue < bank.second) \{\
+                return bank.first;\
+            \}\
+            randValue -= bank.second;\
+        \}\
+        return banks[0].first; // Fallback to the first bank\
+    \}\
+\
+    void showDistribution() const \{\
+        cout << "Traffic distribution:" << endl;\
+        for (const auto& [type, banks] : routingTable) \{\
+            cout << "Payment Type: " << type << endl;\
+            for (const auto& [bank, weight] : banks) \{\
+                cout << "  Bank: " << bank.getName() << " (" << weight << "%)" << endl;\
+            \}\
+        \}\
+    \}\
+\};\
+\
+// Payment Gateway Class\
+class PaymentGateway \{\
+    unordered_map<string, Client> clients;\
+    vector<Bank> banks;\
+    PaymentStrategy* strategy;\
+    Router router;\
+\
+public:\
+    PaymentGateway() : strategy(nullptr) \{\}\
+\
+    void addClient(const string& clientName) \{\
+        clients[clientName] = Client(clientName);\
+    \}\
+\
+    void removeClient(const string& clientName) \{\
+        clients.erase(clientName);\
+    \}\
+\
+    bool hasClient(const string& clientName) \{\
+        return clients.find(clientName) != clients.end();\
+    \}\
+\
+    void addPaymentModeToClient(const string& clientName, const string& mode) \{\
+        if (clients.find(clientName) != clients.end()) \{\
+            clients[clientName].addPaymentMode(mode);\
+        \}\
+    \}\
+\
+    void removePaymentModeFromClient(const string& clientName, const string& mode) \{\
+        if (clients.find(clientName) != clients.end()) \{\
+            clients[clientName].removePaymentMode(mode);\
+        \}\
+    \}\
+\
+    void listSupportedPaymodes(const string& clientName) \{\
+        if (clients.find(clientName) == clients.end()) \{\
+            cout << "Client not found.\\n";\
+            return;\
+        \}\
+        cout << "Supported payment modes for " << clientName << ": ";\
+        for (const auto& mode : clients[clientName].getPaymentModes()) \{\
+            cout << mode << " ";\
+        \}\
+        cout << endl;\
+    \}\
+\
+    void setPaymentStrategy(PaymentStrategy* newStrategy) \{\
+        strategy = newStrategy;\
+    \}\
+\
+    void addBank(const string& bankName) \{\
+        banks.emplace_back(bankName);\
+    \}\
+\
+    void configureRouter(const string& paymentType, const string& bankName, int weight) \{\
+        auto it = find_if(banks.begin(), banks.end(),\
+                          [&](const Bank& bank) \{ return bank.getName() == bankName; \});\
+        if (it != banks.end()) \{\
+            router.addRoute(paymentType, *it, weight);\
+        \}\
+    \}\
+\
+    void showDistribution() \{\
+        router.showDistribution();\
+    \}\
+\
+    void processPayment(const string& clientName, const unordered_map<string, string>& details) \{\
+        if (!hasClient(clientName)) \{\
+            cout << "Client not found.\\n";\
+            return;\
+        \}\
+\
+        if (!strategy) \{\
+            cout << "Payment strategy not set.\\n";\
+            return;\
+        \}\
+\
+        const string& paymentType = details.at("type");\
+        if (!clients[clientName].supportsPaymentMode(paymentType)) \{\
+            cout << "Payment mode not supported by client.\\n";\
+            return;\
+        \}\
+\
+        try \{\
+            Bank selectedBank = router.selectBank(paymentType);\
+            if (strategy->processPayment(selectedBank, details)) \{\
+                cout << "Payment successful via " << selectedBank.getName() << ".\\n";\
+            \} else \{\
+                cout << "Payment failed via " << selectedBank.getName() << ".\\n";\
+            \}\
+        \} catch (const exception& e) \{\
+            cout << "Error during payment processing: " << e.what() << endl;\
+        \}\
+    \}\
+\};\
+\
+// Main Function\
+\
+\
+int main() \{\
+    cout << "==================== Payment Gateway Simulation ====================" << endl;\
+\
+    PaymentGateway gateway;\
+\
+    // Add clients\
+    cout << "\\nAdding Clients to Payment Gateway..." << endl;\
+    gateway.addClient("Flipkart");\
+    cout << "Client 'Flipkart' added." << endl;\
+    gateway.addClient("Amazon");\
+    cout << "Client 'Amazon' added." << endl;\
+\
+    // Add banks\
+    cout << "\\nIntegrating Banks into Payment Gateway..." << endl;\
+    gateway.addBank("HDFC");\
+    cout << "Bank 'HDFC' added." << endl;\
+    gateway.addBank("ICICI");\
+    cout << "Bank 'ICICI' added." << endl;\
+\
+    // Configure Router\
+    cout << "\\nConfiguring Router for Payment Methods..." << endl;\
+    gateway.configureRouter("UPI", "HDFC", 70);\
+    cout << "Configured 'UPI' payments: 70% traffic to 'HDFC'." << endl;\
+    gateway.configureRouter("UPI", "ICICI", 30);\
+    cout << "Configured 'UPI' payments: 30% traffic to 'ICICI'." << endl;\
+    gateway.configureRouter("Netbanking", "ICICI", 100);\
+    cout << "Configured 'Netbanking' payments: 100% traffic to 'ICICI'." << endl;\
+\
+    // Add payment modes to clients\
+    cout << "\\nAdding Payment Modes to Clients..." << endl;\
+    gateway.addPaymentModeToClient("Flipkart", "UPI");\
+    cout << "Payment mode 'UPI' added for 'Flipkart'." << endl;\
+    gateway.addPaymentModeToClient("Amazon", "Netbanking");\
+    cout << "Payment mode 'Netbanking' added for 'Amazon'." << endl;\
+\
+    // List supported payment modes\
+    cout << "\\nListing Supported Payment Modes for Clients..." << endl;\
+    gateway.listSupportedPaymodes("Flipkart");\
+    gateway.listSupportedPaymodes("Amazon");\
+\
+    // Show traffic distribution\
+    cout << "\\nDisplaying Traffic Distribution for Payment Modes..." << endl;\
+    gateway.showDistribution();\
+\
+    // Process UPI Payment\
+    cout << "\\n=== Processing UPI Payment for Flipkart ===" << endl;\
+    UpiPayment upiStrategy;\
+    gateway.setPaymentStrategy(&upiStrategy);\
+    unordered_map<string, string> upiDetails = \{\{"type", "UPI"\}, \{"upi_pin", "1234"\}\};\
+    gateway.processPayment("Flipkart", upiDetails);\
+\
+    // Attempt UPI Payment with invalid details\
+    cout << "\\n=== Attempting UPI Payment for Flipkart with Missing Details ===" << endl;\
+    unordered_map<string, string> invalidUpiDetails = \{\{"type", "UPI"\}\};\
+    gateway.processPayment("Flipkart", invalidUpiDetails);\
+\
+    // Process Netbanking Payment\
+    cout << "\\n=== Processing Netbanking Payment for Amazon ===" << endl;\
+    NetbankingPayment netbankingStrategy;\
+    gateway.setPaymentStrategy(&netbankingStrategy);\
+    unordered_map<string, string> netbankingDetails = \{\{"type", "Netbanking"\}, \{"user_id", "user123"\}, \{"password", "pass123"\}\};\
+    gateway.processPayment("Amazon", netbankingDetails);\
+\
+    // Attempt Netbanking Payment for a Client without Netbanking Mode\
+    cout << "\\n=== Attempting Netbanking Payment for Flipkart (Not Supported) ===" << endl;\
+    gateway.processPayment("Flipkart", netbankingDetails);\
+\
+    // Show traffic distribution again\
+    cout << "\\n=== Final Traffic Distribution ===" << endl;\
+    gateway.showDistribution();\
+\
+    cout << "\\n==================== Simulation Complete ====================" << endl;\
+\
+    return 0;\
+\}\
+\
+\
+\
+Output:\
+==================== Payment Gateway Simulation ====================\
+\
+Adding Clients to Payment Gateway...\
+Client 'Flipkart' added.\
+Client 'Amazon' added.\
+\
+Integrating Banks into Payment Gateway...\
+Bank 'HDFC' added.\
+Bank 'ICICI' added.\
+\
+Configuring Router for Payment Methods...\
+Configured 'UPI' payments: 70% traffic to 'HDFC'.\
+Configured 'UPI' payments: 30% traffic to 'ICICI'.\
+Configured 'Netbanking' payments: 100% traffic to 'ICICI'.\
+\
+Adding Payment Modes to Clients...\
+Payment mode 'UPI' added for 'Flipkart'.\
+Payment mode 'Netbanking' added for 'Amazon'.\
+\
+Listing Supported Payment Modes for Clients...\
+Supported payment modes for Flipkart: UPI \
+Supported payment modes for Amazon: Netbanking \
+\
+Displaying Traffic Distribution for Payment Modes...\
+Traffic distribution:\
+Payment Type: UPI\
+  Bank: HDFC (70%)\
+  Bank: ICICI (30%)\
+Payment Type: Netbanking\
+  Bank: ICICI (100%)\
+\
+=== Processing UPI Payment for Flipkart ===\
+Payment successful via HDFC.\
+\
+=== Attempting UPI Payment for Flipkart with Missing Details ===\
+UPI Payment failed: Missing UPI PIN.\
+\
+=== Processing Netbanking Payment for Amazon ===\
+Payment successful via ICICI.\
+\
+=== Attempting Netbanking Payment for Flipkart (Not Supported) ===\
+Payment mode not supported by client.\
+\
+=== Final Traffic Distribution ===\
+Traffic distribution:\
+Payment Type: UPI\
+  Bank: HDFC (70%)\
+  Bank: ICICI (30%)\
+Payment Type: Netbanking\
+  Bank: ICICI (100%)\
+\
+==================== Simulation Complete ====================\
+\
+}
