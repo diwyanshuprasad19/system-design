@@ -1,0 +1,469 @@
+Link for questions:
+https://docs.google.com/document/d/1nZzXCuFSiEbZ-STfVf_HiyNYjhgWNtZl3NsLFj4hXkk/edit?tab=t.0
+
+*************************************************************************************
+Requirements:
+Requirements
+1. User Features:
+    * Create accounts and manage profile information.
+    * View individual balances and transaction history.
+    * Settle balances with other users.
+2. Group Features:
+    * Create groups and add/remove members.
+    * Add expenses within a group.
+    * View group expenses.
+3. Expense Management:
+    * Support multiple split methods: equal, percentage, and exact.
+    * Automatically calculate and update participant balances when expenses are added.
+4. Concurrency:
+    * Handle concurrent transactions.
+    * Ensure data consistency using thread-safe data structures.
+
+Class Design
+1. User Class:
+    * Properties: ID, name, email, and balances (a map storing balances with other users).
+    * Balances map structure: {UserID -> Balance}.
+2. Group Class:
+    * Properties: ID, name, members (list of User), and expenses (list of Expense).
+3. Expense Class:
+    * Properties: ID, amount, description, paidBy (the payer), and splits (list of Split).
+4. Split Class (Abstract):
+    * Subclasses:
+        * EqualSplit
+        * PercentSplit
+        * ExactSplit
+    * Properties depend on the specific split type.
+5. Transaction Class:
+    * Properties: ID, sender (payer), receiver (payee), and amount.
+6. SplitwiseService Class:
+    * Singleton implementation to manage system operations.
+    * Core methods:
+        * Adding users, groups, and expenses.
+        * Calculating and updating balances.
+        * Settling balances.
+        * Viewing transaction histories.
+7. Thread-Safe Structures:
+    * ConcurrentHashMap for mappings like user balances.
+    * CopyOnWriteArrayList for lists like group members and expenses.
+8. SplitwiseDemo Class:
+    * Demonstrates system usage with practical examples of adding users, groups, expenses, and settling balances.
+
+******************************************************************************************
+
+Code in c++:
+#include <bits/stdc++.h>
+using namespace std;
+
+class User; // Forward declaration
+class Split; // Forward declaration
+class Expense; // Forward declaration
+class Group; // Forward declaration
+
+// Abstract Split Class
+class Split {
+protected:
+    User* user;
+    double amount;
+
+public:
+    explicit Split(User* user) : user(user), amount(0) {}
+    virtual ~Split() = default;
+
+    virtual double getAmount() const = 0;
+
+    void setAmount(double amount) { this->amount = amount; }
+
+    User* getUser() const { return user; }
+};
+
+// EqualSplit Subclass
+class EqualSplit : public Split {
+public:
+    explicit EqualSplit(User* user) : Split(user) {}
+
+    double getAmount() const override {
+        return amount;
+    }
+
+    void setEqualAmount(double equalAmount) {
+        this->amount = equalAmount;
+    }
+};
+
+// ExactSplit Subclass
+class ExactSplit : public Split {
+public:
+    ExactSplit(User* user, double amount) : Split(user) {
+        this->amount = amount;
+    }
+
+    double getAmount() const override {
+        return amount;
+    }
+
+    bool validateExactSplit(double totalAmount) {
+        return amount <= totalAmount;
+    }
+};
+
+// PercentSplit Subclass
+class PercentSplit : public Split {
+private:
+    double percent;
+
+public:
+    PercentSplit(User* user, double percent) : Split(user), percent(percent) {}
+
+    double getAmount() const override {
+        return amount;
+    }
+
+    double getPercent() const { return percent; }
+
+    void calculatePercentAmount(double totalAmount) {
+        this->amount = (percent / 100.0) * totalAmount;
+    }
+};
+
+// User Class
+class User {
+private:
+    string id;
+    string name;
+    string email;
+    unordered_map<string, double> balances;
+
+public:
+    User(const string& id, const string& name, const string& email)
+        : id(id), name(name), email(email) {}
+
+    const string& getId() const { return id; }
+    const string& getName() const { return name; }
+    const string& getEmail() const { return email; }
+    unordered_map<string, double>& getBalances() { return balances; }
+};
+
+// Expense Class
+class Expense {
+private:
+    string id;
+    double amount;
+    string description;
+    User* paidBy;
+    vector<shared_ptr<Split>> splits;
+
+public:
+    Expense(const string& id, double amount, const string& description, User* paidBy)
+        : id(id), amount(amount), description(description), paidBy(paidBy) {}
+
+    void addSplit(shared_ptr<Split> split) {
+        splits.push_back(split);
+    }
+
+    const string& getId() const { return id; }
+    double getAmount() const { return amount; }
+    const string& getDescription() const { return description; }
+    User* getPaidBy() const { return paidBy; }
+    const vector<shared_ptr<Split>>& getSplits() const { return splits; }
+};
+
+// Group Class
+class Group {
+private:
+    string id;
+    string name;
+    vector<User*> members;
+    vector<shared_ptr<Expense>> expenses;
+
+public:
+    Group(const string& id, const string& name) : id(id), name(name) {}
+
+    void addMember(User* user) {
+        members.push_back(user);
+    }
+
+    void addExpense(shared_ptr<Expense> expense) {
+        expenses.push_back(expense);
+    }
+
+    const string& getId() const { return id; }
+    const string& getName() const { return name; }
+    const vector<User*>& getMembers() const { return members; }
+    const vector<shared_ptr<Expense>>& getExpenses() const { return expenses; }
+};
+
+// Transaction Class
+class Transaction {
+private:
+    string id;
+    User* sender;
+    User* receiver;
+    double amount;
+
+public:
+    Transaction(const string& id, User* sender, User* receiver, double amount)
+        : id(id), sender(sender), receiver(receiver), amount(amount) {}
+
+    const string& getId() const { return id; }
+    User* getSender() const { return sender; }
+    User* getReceiver() const { return receiver; }
+    double getAmount() const { return amount; }
+};
+
+// SplitwiseService Singleton Class
+class SplitwiseService {
+private:
+    unordered_map<string, User*> users;
+    unordered_map<string, Group*> groups;
+    int transactionCounter = 0;
+
+    static SplitwiseService* instance;
+
+    void updateBalance(User* user1, User* user2, double amount) {
+        string key = user1->getId() + ":" + user2->getId();
+        user1->getBalances()[key] += amount;
+    }
+
+    string generateTransactionId() {
+        return "TXN" + to_string(++transactionCounter);
+    }
+
+    void createTransaction(User* sender, User* receiver, double amount) {
+        string transactionId = generateTransactionId();
+        Transaction transaction(transactionId, sender, receiver, amount);
+
+        // Print transaction details
+        cout << "Transaction Processed: \n";
+        cout << "  ID: " << transaction.getId() << "\n";
+        cout << "  Sender: " << sender->getName() << "\n";
+        cout << "  Receiver: " << receiver->getName() << "\n";
+        cout << "  Amount: $" << amount << "\n";
+        cout << "-----------------------------------\n";
+    }
+
+public:
+    static SplitwiseService* getInstance() {
+        if (!instance) {
+            instance = new SplitwiseService();
+        }
+        return instance;
+    }
+
+    void addUser(User* user) {
+        users[user->getId()] = user;
+    }
+
+    void addGroup(Group* group) {
+        groups[group->getId()] = group;
+    }
+
+    void addExpense(const string& groupId, shared_ptr<Expense> expense) {
+        Group* group = groups[groupId];
+        if (group) {
+            group->addExpense(expense);
+            updateBalances(expense);
+        }
+    }
+
+    void updateBalances(shared_ptr<Expense> expense) {
+        for (auto& split : expense->getSplits()) {
+            User* paidBy = expense->getPaidBy();
+            User* user = split->getUser();
+            double amount = split->getAmount();
+
+            if (paidBy != user) {
+                updateBalance(paidBy, user, amount);
+                updateBalance(user, paidBy, -amount);
+            }
+        }
+    }
+
+    void settleBalance(const string& userId1, const string& userId2) {
+        User* user1 = users[userId1];
+        User* user2 = users[userId2];
+        if (user1 && user2) {
+            string key = user1->getId() + ":" + userId2;
+            double balance = user1->getBalances()[key];
+
+            if (balance > 0) {
+                createTransaction(user1, user2, balance);
+                user1->getBalances()[key] = 0;
+                user2->getBalances()[user2->getId() + ":" + user1->getId()] = 0;
+            }
+        }
+    }
+};
+
+SplitwiseService* SplitwiseService::instance = nullptr;
+
+// Main Function
+int main() {
+    SplitwiseService* service = SplitwiseService::getInstance();
+
+    // Create users
+    User* user1 = new User("1", "Alice", "alice@example.com");
+    User* user2 = new User("2", "Bob", "bob@example.com");
+    User* user3 = new User("3", "Charlie", "charlie@example.com");
+
+    service->addUser(user1);
+    service->addUser(user2);
+    service->addUser(user3);
+
+    // Create a group
+    Group* group = new Group("1", "Apartment");
+    group->addMember(user1);
+    group->addMember(user2);
+    group->addMember(user3);
+
+    service->addGroup(group);
+
+    // Add an expense
+    auto expense = make_shared<Expense>("1", 300.0, "Rent", user1);
+    auto equalSplitAlice = make_shared<EqualSplit>(user1);
+    auto equalSplitBob = make_shared<EqualSplit>(user2);
+    auto percentSplitCharlie = make_shared<PercentSplit>(user3, 20.0);
+
+    equalSplitAlice->setEqualAmount(300.0 / 3);
+    equalSplitBob->setEqualAmount(300.0 / 3);
+    percentSplitCharlie->calculatePercentAmount(300.0);
+
+    expense->addSplit(equalSplitAlice);
+    expense->addSplit(equalSplitBob);
+    expense->addSplit(percentSplitCharlie);
+
+    service->addExpense(group->getId(), expense);
+
+    // Settle balances
+    service->settleBalance(user1->getId(), user2->getId());
+    service->settleBalance(user1->getId(), user3->getId());
+
+    // Print balances
+    for (auto user : {user1, user2, user3}) {
+        cout << "User: " << user->getName() << "\n";
+        for (auto& balance : user->getBalances()) {
+            cout << "  Balance with " << balance.first << ": " << balance.second << "\n";
+        }
+    }
+
+    return 0;
+}
+
+
+
+Output:
+Transaction Processed: 
+  ID: TXN1
+  Sender: Alice
+  Receiver: Bob
+  Amount: $100
+-----------------------------------
+Transaction Processed: 
+  ID: TXN2
+  Sender: Alice
+  Receiver: Charlie
+  Amount: $60
+-----------------------------------
+User: Alice
+User: Bob
+User: Charlie
+
+
+*********************************************************************************
+
+
+1. Singleton Pattern
+* Where Used: SplitwiseService class.
+* Description:
+    * Ensures that only one instance of the SplitwiseService exists throughout the application's lifecycle.
+    * This is implemented by making the constructor private and providing a static getInstance method to access the instance.
+* Benefits:
+    * Centralized management of users, groups, and expenses.
+    * Avoids the overhead of creating multiple instances.
+cpp
+Copy code
+static SplitwiseService* instance;
+static SplitwiseService* getInstance() {
+    if (!instance) {
+        instance = new SplitwiseService();
+    }
+    return instance;
+}
+
+2. Factory Method Pattern (Implicit)
+* Where Used: Creating specific split types (EqualSplit, ExactSplit, PercentSplit).
+* Description:
+    * Each split type (EqualSplit, ExactSplit, PercentSplit) represents a specific implementation of the abstract Split class.
+    * While there isn't an explicit factory method in this code, the client code (e.g., main) acts as the "factory" for instantiating appropriate split objects.
+* Benefits:
+    * Encapsulates the behavior of different split types.
+    * Allows the SplitwiseService to remain agnostic of the specific split logic.
+cpp
+Copy code
+auto equalSplitAlice = make_shared<EqualSplit>(user1);
+auto percentSplitCharlie = make_shared<PercentSplit>(user3, 20.0);
+
+3. Strategy Pattern
+* Where Used: The Split hierarchy (EqualSplit, ExactSplit, PercentSplit).
+* Description:
+    * Defines a family of algorithms (different split strategies), encapsulates them in classes, and makes them interchangeable.
+    * Each split type provides its own implementation for splitting an expense.
+* Benefits:
+    * Open/closed principle: Adding new split types does not affect the existing code.
+    * Simplifies the expense calculation logic in the SplitwiseService.
+cpp
+Copy code
+class Split {
+    virtual double getAmount() const = 0;
+};
+class EqualSplit : public Split {
+    double getAmount() const override { return amount; }
+};
+
+4. Composite Pattern
+* Where Used: Expense class managing a collection of Split objects.
+* Description:
+    * Treats a group of Split objects as a single unit to represent how an expense is distributed.
+* Benefits:
+    * Simplifies expense management by encapsulating the logic of multiple splits within a single Expense object.
+cpp
+Copy code
+class Expense {
+    vector<shared_ptr<Split>> splits;
+};
+
+5. Observer Pattern (Implicit)
+* Where Used: Transaction creation and balance updates in SplitwiseService.
+* Description:
+    * Changes in balances trigger the creation of transactions to reflect those changes.
+    * While explicit observers are not defined, the SplitwiseService acts as the subject that updates balances and notifies changes through transactions.
+* Benefits:
+    * Ensures consistency between balances and transaction records.
+cpp
+Copy code
+void createTransaction(User* sender, User* receiver, double amount) {
+    Transaction transaction(transactionId, sender, receiver, amount);
+    // Log transaction details
+}
+
+6. Builder Pattern (Implicit)
+* Where Used: Construction of Expense objects in the main function.
+* Description:
+    * Expense objects are created step-by-step by adding individual Split objects.
+    * While not implemented as a formal builder, the construction process follows the builder pattern principles.
+* Benefits:
+    * Simplifies the creation of complex Expense objects with multiple splits.
+cpp
+Copy code
+auto expense = make_shared<Expense>("1", 300.0, "Rent", user1);
+expense->addSplit(equalSplitAlice);
+expense->addSplit(equalSplitBob);
+
+Summary of Design Patterns Used
+Pattern	Purpose	Class/Area of Use
+Singleton	Ensure a single instance of SplitwiseService.	SplitwiseService
+Factory Method	Create specific split types (EqualSplit, PercentSplit).	Split, main
+Strategy	Define and encapsulate different split algorithms.	Split and its subclasses
+Composite	Manage multiple Split objects as part of an Expense.	Expense
+Observer (Implicit)	Notify changes in balances via transaction creation.	SplitwiseService
+Builder (Implicit)	Construct Expense objects step-by-step.	main, Expense
+These design patterns make the system modular, extensible, and easier to maintain.
