@@ -49,7 +49,253 @@ Class Design
     * Demonstrates system usage with practical examples of adding users, groups, expenses, and settling balances.
 
 ******************************************************************************************
+debt:
+Key Concepts
+Positive Amount:
 
+Indicates Debt: The user owes money to another user.
+Example:
+If Alice's balance with Bob is +100, it means Alice owes Bob $100.
+Negative Amount:
+
+Indicates Credit: The user is owed money by another user.
+Example:
+If Alice's balance with Bob is -100, it means Bob owes Alice $100.
+Example Scenario
+Initial Setup
+Alice pays $300 for groceries.
+The expense is split equally among Alice, Bob, and Charlie:
+Alice: $100
+Bob: $100
+Charlie: $100
+Balances After Adding Expense
+Alice's Balance:
+Alice:Bob = +100 (Alice is owed $100 by Bob).
+Alice:Charlie = +100 (Alice is owed $100 by Charlie).
+Bob's Balance:
+Bob:Alice = -100 (Bob owes $100 to Alice).
+Charlie's Balance:
+Charlie:Alice = -100 (Charlie owes $100 to Alice).
+After Settling Balances
+Bob settles $100 with Alice:
+Alice:Bob becomes 0 (balance cleared).
+Bob:Alice becomes 0 (balance cleared).
+Charlie does not settle:
+Alice:Charlie remains +100.
+Final Balances
+plaintext
+Copy code
+User: Alice
+  Balance with Bob: 0
+  Balance with Charlie: +100 (Charlie owes Alice $100)
+
+User: Bob
+  Balance with Alice: 0
+
+User: Charlie
+  Balance with Alice: -100 (Charlie owes Alice $100)
+Summary
+A positive amount in the balance means the user owes money (debt).
+A negative amount means the user is owed money (credit).
+
+
+
+
+
+
+
+1. Class Split
+Purpose: Base class for different types of splits.
+Key Members:
+User* user: The user associated with this split.
+double amount: The amount the user owes or contributes.
+setAmount(double amount): Sets the amount for this split.
+getUser(): Returns the associated user.
+getAmount(): Abstract method implemented in derived classes to retrieve the split amount.
+2. Class EqualSplit
+Purpose: Represents an equal division of an expense.
+Key Members:
+setEqualAmount(double equalAmount): Sets the equal share for a user.
+Code Example:
+
+cpp
+Copy code
+auto expense1 = make_shared<Expense>("E1", 300.0, "Groceries", user1);
+expense1->addSplit(make_shared<EqualSplit>(user1));
+expense1->addSplit(make_shared<EqualSplit>(user2));
+expense1->addSplit(make_shared<EqualSplit>(user3));
+Alice, Bob, and Charlie share $300 equally ($100 each).
+3. Class ExactSplit
+Purpose: Represents a fixed amount assigned to each user.
+Key Members:
+validateExactSplit(double totalAmount): Ensures the split amount does not exceed the total expense.
+Code Example:
+
+cpp
+Copy code
+expense2->addSplit(make_shared<ExactSplit>(user1, 150.0));
+expense2->addSplit(make_shared<ExactSplit>(user2, 150.0));
+expense2->addSplit(make_shared<ExactSplit>(user3, 100.0));
+Alice owes $150, Bob $150, and Charlie $100 for a $400 dinner.
+4. Class PercentSplit
+Purpose: Represents a percentage-based split of the expense.
+Key Members:
+calculatePercentAmount(double totalAmount): Calculates the amount owed based on the given percentage.
+Code Example:
+
+cpp
+Copy code
+auto split1 = make_shared<PercentSplit>(user1, 40.0);
+split1->calculatePercentAmount(500.0);
+auto split2 = make_shared<PercentSplit>(user2, 30.0);
+split2->calculatePercentAmount(500.0);
+auto split3 = make_shared<PercentSplit>(user3, 30.0);
+Alice pays 40% ($200), Bob pays 30% ($150), and Charlie pays 30% ($150) for a $500 party.
+5. Class User
+Purpose: Represents a user in the system.
+Key Members:
+string id, name, email: User's unique ID, name, and email.
+unordered_map<string, double> balances: Tracks balances with other users. Key: "UserID:OtherUserID".
+getBalances(): Returns all balances for the user.
+6. Class Expense
+Purpose: Represents an expense.
+Key Members:
+string id, description: Expense ID and description.
+User* paidBy: User who paid the expense.
+vector<shared_ptr<Split>> splits: List of splits associated with this expense.
+Code Example:
+
+cpp
+Copy code
+auto expense = make_shared<Expense>("E1", 300.0, "Groceries", user1);
+Alice (user1) paid $300 for groceries.
+7. Class Group
+Purpose: Represents a group of users.
+Key Members:
+vector<User*> members: List of group members.
+vector<shared_ptr<Expense>> expenses: List of expenses for the group.
+Code Example:
+
+cpp
+Copy code
+Group* group = new Group("G1", "Apartment");
+group->addMember(user1);
+group->addMember(user2);
+group->addMember(user3);
+Group "Apartment" includes Alice, Bob, and Charlie.
+8. Class Transaction
+Purpose: Represents a financial transaction between two users.
+Key Members:
+User* sender, *receiver: Sender and receiver of the transaction.
+double amount: Transaction amount.
+Code Example:
+
+cpp
+Copy code
+Transaction transaction(transactionId, sender, receiver, amount);
+Represents a transfer from Alice to Bob for $150.
+9. Class SplitwiseService
+Purpose: Manages users, groups, and expenses.
+Key Members:
+addUser(User* user): Adds a user to the system.
+addGroup(Group* group): Adds a group to the system.
+addExpense(string groupId, shared_ptr<Expense> expense): Adds an expense to a group.
+settleBalance(string userId1, string userId2): Settles balances between two users.
+Key Methods:
+
+updateBalances(shared_ptr<Expense> expense):
+
+Updates balances for users based on splits.
+Adds amounts owed by each user to the balances map.
+createTransaction(User* sender, User* receiver, double amount):
+
+Logs a transaction when settling balances.
+Example:
+plaintext
+Copy code
+Transaction Processed: 
+  ID: TXN1
+  Sender: Alice
+  Receiver: Bob
+  Amount: $150
+Main Function Workflow
+1. Create Users
+cpp
+Copy code
+User* user1 = new User("1", "Alice", "alice@example.com");
+User* user2 = new User("2", "Bob", "bob@example.com");
+User* user3 = new User("3", "Charlie", "charlie@example.com");
+2. Create Group
+cpp
+Copy code
+Group* group = new Group("G1", "Apartment");
+group->addMember(user1);
+group->addMember(user2);
+group->addMember(user3);
+3. Add Expenses
+Equal Split:
+
+Alice pays $300, shared equally among all users.
+plaintext
+Copy code
+Alice: $100
+Bob: $100
+Charlie: $100
+Exact Split:
+
+Bob pays $400, split as follows:
+plaintext
+Copy code
+Alice: $150
+Bob: $150
+Charlie: $100
+Percent Split:
+
+Charlie pays $500, split as follows:
+plaintext
+Copy code
+Alice: $200 (40%)
+Bob: $150 (30%)
+Charlie: $150 (30%)
+4. Settle Balances
+Alice settles with Bob:
+
+plaintext
+Copy code
+Alice pays Bob $150.
+Charlie settles with Alice:
+
+plaintext
+Copy code
+Charlie pays Alice $200.
+Final Output
+plaintext
+Copy code
+Transaction Processed: 
+  ID: TXN1
+  Sender: Alice
+  Receiver: Bob
+  Amount: $150
+-----------------------------------
+Transaction Processed: 
+  ID: TXN2
+  Sender: Charlie
+  Receiver: Alice
+  Amount: $200
+-----------------------------------
+User: Alice
+  Balance with 1:2: 0
+  Balance with 1:3: -100
+User: Bob
+  Balance with 2:1: 0
+User: Charlie
+  Balance with 3:1: 100
+Key Insights
+Different types of splits (Equal, Exact, Percent) allow flexible division of expenses.
+Transactions simplify settling balances among users.
+The system updates balances dynamically after each expense or settlement.
+
+******************************************************************************************
 Code in c++:
 #include <bits/stdc++.h>
 using namespace std;
