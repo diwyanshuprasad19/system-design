@@ -1,0 +1,219 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Abstract class for Notification (Bridge Pattern)
+class NotificationSender {
+public:
+    virtual void sendNotification(const string& type, const string& content) = 0;
+    virtual ~NotificationSender() = default;
+};
+
+// Concrete Implementations of NotificationSender (Implementation)
+class SMSNotificationSender : public NotificationSender {
+public:
+    void sendNotification(const string& type, const string& content) override {
+        cout << "Sending " << type << " Notification: " << content << endl;
+    }
+};
+
+class EmailNotificationSender : public NotificationSender {
+public:
+    void sendNotification(const string& type, const string& content) override {
+        cout << "Sending " << type << " Notification: " << content << endl;
+    }
+};
+
+class PushNotificationSender : public NotificationSender {
+public:
+    void sendNotification(const string& type, const string& content) override {
+        cout << "Sending " << type << " Notification: " << content << endl;
+    }
+};
+
+// Abstract class for Notification (Bridge Pattern)
+class Notification {
+protected:
+    NotificationSender* sender;
+
+public:
+    Notification(NotificationSender* sender) : sender(sender) {}
+    virtual void send() = 0;
+    virtual ~Notification() = default;
+};
+
+// Concrete Notification Types (Abstraction)
+class SMSNotification : public Notification {
+    string content;
+
+public:
+    SMSNotification(NotificationSender* sender, const string& content)
+        : Notification(sender), content(content) {}
+
+    void send() override {
+        sender->sendNotification("SMS", content);
+    }
+};
+
+class EmailNotification : public Notification {
+    string content;
+
+public:
+    EmailNotification(NotificationSender* sender, const string& content)
+        : Notification(sender), content(content) {}
+
+    void send() override {
+        sender->sendNotification("Email", content);
+    }
+};
+
+class PushNotification : public Notification {
+    string content;
+
+public:
+    PushNotification(NotificationSender* sender, const string& content)
+        : Notification(sender), content(content) {}
+
+    void send() override {
+        sender->sendNotification("Push", content);
+    }
+};
+
+// Decorator Pattern: Adds additional functionality to notifications
+class NotificationDecorator : public Notification {
+protected:
+    Notification* decoratedNotification;
+
+public:
+    NotificationDecorator(Notification* decoratedNotification)
+        : Notification(decoratedNotification->sender), decoratedNotification(decoratedNotification) {}
+
+    void send() override {
+        decoratedNotification->send();
+    }
+};
+
+// Adding timestamp to notifications
+class TimestampDecorator : public NotificationDecorator {
+public:
+    TimestampDecorator(Notification* decoratedNotification)
+        : NotificationDecorator(decoratedNotification) {}
+
+    void send() override {
+        cout << "Timestamp: " << time(nullptr) << endl;
+        decoratedNotification->send();
+    }
+};
+
+// Adding priority to notifications
+class PriorityDecorator : public NotificationDecorator {
+    string priority;
+
+public:
+    PriorityDecorator(Notification* decoratedNotification, const string& priority)
+        : NotificationDecorator(decoratedNotification), priority(priority) {}
+
+    void send() override {
+        cout << "Priority: " << priority << endl;
+        decoratedNotification->send();
+    }
+};
+
+// Observer Pattern: Notification Receiver interface
+class NotificationReceiver {
+public:
+    virtual void notify(Notification* notification) = 0;
+    virtual ~NotificationReceiver() = default;
+};
+
+// Notification Handler to manage subscriptions (Observer Pattern)
+class NotificationHandler {
+    unordered_set<NotificationReceiver*> subscribers;
+
+public:
+    void subscribeUser(NotificationReceiver* user) {
+        subscribers.insert(user);
+    }
+
+    void unsubscribeUser(NotificationReceiver* user) {
+        subscribers.erase(user);
+    }
+
+    void notifyAll(Notification* notification) {
+        for (auto user : subscribers) {
+            user->notify(notification);
+        }
+    }
+};
+
+// Concrete Notification Receiver implementations
+class SMSNotificationReceiver : public NotificationReceiver {
+    string phoneNumber;
+
+public:
+    SMSNotificationReceiver(const string& phoneNumber) : phoneNumber(phoneNumber) {}
+
+    void notify(Notification* notification) override {
+        cout << "Sending SMS to " << phoneNumber << endl;
+        notification->send();
+    }
+};
+
+class EmailNotificationReceiver : public NotificationReceiver {
+    string email;
+
+public:
+    EmailNotificationReceiver(const string& email) : email(email) {}
+
+    void notify(Notification* notification) override {
+        cout << "Sending Email to " << email << endl;
+        notification->send();
+    }
+};
+
+class PushNotificationReceiver : public NotificationReceiver {
+    string pushId;
+
+public:
+    PushNotificationReceiver(const string& pushId) : pushId(pushId) {}
+
+    void notify(Notification* notification) override {
+        cout << "Sending Push notification to " << pushId << endl;
+        notification->send();
+    }
+};
+
+// Main function to test the system
+int main() {
+    // Create senders
+    SMSNotificationSender smsSender;
+    EmailNotificationSender emailSender;
+    PushNotificationSender pushSender;
+
+    // Create basic notifications
+    SMSNotification smsNotification(&smsSender, "Hello from SMS!");
+    EmailNotification emailNotification(&emailSender, "Hello from Email!");
+    PushNotification pushNotification(&pushSender, "Hello from Push!");
+
+    // Add decorators for added functionality
+    TimestampDecorator timestampedSms(&smsNotification);
+    PriorityDecorator prioritizedSms(&timestampedSms, "High");
+    TimestampDecorator timestampedEmail(&emailNotification);
+
+    // Create receivers
+    SMSNotificationReceiver smsReceiver("123-456-7890");
+    EmailNotificationReceiver emailReceiver("user@example.com");
+    PushNotificationReceiver pushReceiver("userPushId");
+
+    // Create handler and subscribe users
+    NotificationHandler notificationHandler;
+    notificationHandler.subscribeUser(&smsReceiver);
+    notificationHandler.subscribeUser(&emailReceiver);
+    notificationHandler.subscribeUser(&pushReceiver);
+
+    // Notify all users
+    notificationHandler.notifyAll(&prioritizedSms);
+    notificationHandler.notifyAll(&timestampedEmail);
+    notificationHandler.notifyAll(&pushNotification);
+
+    return 0;
+}
