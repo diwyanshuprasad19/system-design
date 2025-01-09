@@ -1,0 +1,301 @@
+issues:
+https://docs.google.com/document/d/1wYCo7ayMoPDV_5LiTrMw4_CT7V3mNScSc2ooX5TAdqY/edit?tab=t.0
+
+
+code:
+#include <bits/stdc++.h>
+using namespace std;
+
+// Enum definitions
+enum class BookingStatus { CONFIRMED, CANCELLED, PENDING, EXPIRED };
+enum class SeatStatus { AVAILABLE, RESERVED, OCCUPIED };
+enum class SeatType { ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST_CLASS };
+enum class PaymentStatus { PENDING, COMPLETED, FAILED, REFUNDED };
+
+// Class definitions
+class Seat {
+public:
+    string seatNumber;
+    SeatType type;
+    SeatStatus status;
+
+    Seat(const string& seatNumber, SeatType type)
+        : seatNumber(seatNumber), type(type), status(SeatStatus::AVAILABLE) {}
+
+    void reserve() { status = SeatStatus::RESERVED; }
+    void release() { status = SeatStatus::AVAILABLE; }
+};
+
+class Passenger {
+public:
+    string id, name, email, phone;
+
+    Passenger(const string& id, const string& name, const string& email, const string& phone)
+        : id(id), name(name), email(email), phone(phone) {}
+};
+
+class Flight {
+public:
+    string flightNumber, source, destination;
+    time_t departureTime, arrivalTime;
+    vector<Seat> availableSeats;
+
+    Flight(const string& flightNumber, const string& source, const string& destination,
+           time_t departureTime, time_t arrivalTime)
+        : flightNumber(flightNumber), source(source), destination(destination),
+          departureTime(departureTime), arrivalTime(arrivalTime) {}
+
+    string getFlightInfo() const {
+        stringstream ss;
+        ss << "Flight Number: " << flightNumber << "\n"
+           << "Source: " << source << "\n"
+           << "Destination: " << destination << "\n"
+           << "Departure Time: " << ctime(&departureTime)
+           << "Arrival Time: " << ctime(&arrivalTime);
+        return ss.str();
+    }
+};
+
+class Booking {
+public:
+    string bookingNumber;
+    Flight flight;
+    Passenger passenger;
+    Seat seat;
+    double price;
+    BookingStatus status;
+
+    Booking(const string& bookingNumber, const Flight& flight, const Passenger& passenger,
+            const Seat& seat, double price)
+        : bookingNumber(bookingNumber), flight(flight), passenger(passenger),
+          seat(seat), price(price), status(BookingStatus::CONFIRMED) {}
+
+    void cancel() { status = BookingStatus::CANCELLED; }
+};
+
+class BookingManager {
+private:
+    map<string, Booking> bookings;
+    mutex mtx;
+    atomic<int> bookingCounter;
+
+    BookingManager() : bookingCounter(0) {}
+
+public:
+    BookingManager(const BookingManager&) = delete;
+    BookingManager& operator=(const BookingManager&) = delete;
+
+    static BookingManager& getInstance() {
+        static BookingManager instance;
+        return instance;
+    }
+
+    Booking createBooking(const Flight& flight, const Passenger& passenger, const Seat& seat, double price) {
+        string bookingNumber = generateBookingNumber();
+        Booking booking(bookingNumber, flight, passenger, seat, price);
+
+        lock_guard<mutex> guard(mtx);
+        bookings[bookingNumber] = booking;
+
+        return booking;
+    }
+
+    void cancelBooking(const string& bookingNumber) {
+        lock_guard<mutex> guard(mtx);
+        if (bookings.count(bookingNumber)) {
+            bookings[bookingNumber].cancel();
+        }
+    }
+
+private:
+    string generateBookingNumber() {
+        int bookingId = ++bookingCounter;
+        time_t now = time(0);
+        tm* localTime = localtime(&now);
+        char timestamp[20];
+        strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", localTime);
+        stringstream ss;
+        ss << "BKG" << timestamp << setfill('0') << setw(6) << bookingId;
+        return ss.str();
+    }
+};
+
+class AirlineManagementSystem {
+private:
+    vector<Flight> flights;
+    vector<Passenger> passengers;
+
+public:
+    void addFlight(const Flight& flight) { flights.push_back(flight); }
+    void addPassenger(const Passenger& passenger) { passengers.push_back(passenger); }
+
+    vector<Flight> searchFlights(const string& source, const string& destination, time_t date) {
+        vector<Flight> results;
+        tm* dateTm = localtime(&date);
+
+        for (const auto& flight : flights) {
+            tm* flightDateTm = localtime(&flight.departureTime);
+            if (flight.source == source && flight.destination == destination &&
+                flightDateTm->tm_year == dateTm->tm_year &&
+                flightDateTm->tm_mon == dateTm->tm_mon &&
+                flightDateTm->tm_mday == dateTm->tm_mday) {
+                results.push_back(flight);
+            }
+        }
+        return results;
+    }
+};
+
+// Main function
+int main() {
+    AirlineManagementSystem system;
+    BookingManager& bookingManager = BookingManager::getInstance();
+
+    // Step 1: Add passengers
+    Passenger passenger1("P001", "John Doe", "john@example.com", "1234567890");
+    Passenger passenger2("P002", "Jane Smith", "jane@example.com", "0987654321");
+    system.addPassenger(passenger1);
+    system.addPassenger(passenger2);
+
+    // Step 2: Add flights
+    time_t now = time(0);
+    Flight flight1("F001", "New York", "London", now + 86400, now + 93600);
+    Flight flight2("F002", "Paris", "Tokyo", now + 172800, now + 208800);
+    system.addFlight(flight1);
+    system.addFlight(flight2);
+
+    // Step 3: Search for flights
+    vector<Flight> flightsToBook = system.searchFlights("New York", "London", now + 86400);
+    cout << "Available flights for New York to London:" << endl;
+    for (const auto& flight : flightsToBook) {
+        cout << flight.getFlightInfo() << endl;
+    }
+
+    // Step 4: Book flights
+    Seat seat1("25A", SeatType::ECONOMY);
+    Seat seat2("30B", SeatType::BUSINESS);
+
+    if (!flightsToBook.empty()) {
+        Booking booking1 = bookingManager.createBooking(flightsToBook[0], passenger1, seat1, 200.0);
+        Booking booking2 = bookingManager.createBooking(flightsToBook[0], passenger2, seat2, 500.0);
+
+        cout << "\nBooking successful for Passenger 1: " << booking1.bookingNumber << endl;
+        cout << "Booking successful for Passenger 2: " << booking2.bookingNumber << endl;
+
+        // Cancel one booking
+        bookingManager.cancelBooking(booking1.bookingNumber);
+        cout << "\nBooking cancelled for Passenger 1: " << booking1.bookingNumber << endl;
+    }
+
+    return 0;
+}
+
+
+Output:
+Available flights for New York to London:
+Flight Number: F001
+Source: New York
+Destination: London
+Departure Time: Tue Jan  7 04:00:00 2025
+Arrival Time: Tue Jan  7 06:00:00 2025
+
+Booking successful for Passenger 1: BKG20250107040001000001
+Booking successful for Passenger 2: BKG20250107040001000002
+
+Booking cancelled for Passenger 1: BKG20250107040001000001
+
+
+***************************************************************
+
+
+Whih design pattern is followed here:
+1. Singleton Pattern
+Where Used:
+
+The BookingManager class follows the Singleton Pattern.
+Description:
+
+The Singleton pattern ensures that only one instance of a class is created and provides a global point of access to it.
+Implementation in Code:
+
+The constructor is private:
+cpp
+Copy code
+BookingManager() : bookingCounter(0) {}
+Copy constructor and assignment operator are deleted to prevent cloning:
+cpp
+Copy code
+BookingManager(const BookingManager&) = delete;
+BookingManager& operator=(const BookingManager&) = delete;
+A static instance is created in the getInstance() method:
+cpp
+Copy code
+static BookingManager instance;
+return instance;
+Purpose in the Code:
+
+Ensures that there is only one BookingManager instance throughout the application's lifecycle.
+Centralizes booking management to maintain consistency and simplify interactions.
+2. Factory Method Pattern
+Where Used:
+
+The BookingManager::createBooking method can be seen as a Factory Method.
+Description:
+
+The Factory Method pattern defines an interface for creating an object but allows subclasses or specific methods to decide which class to instantiate.
+Implementation in Code:
+
+The createBooking method generates a unique booking number and constructs a Booking object:
+cpp
+Copy code
+Booking createBooking(const Flight& flight, const Passenger& passenger, const Seat& seat, double price) {
+    string bookingNumber = generateBookingNumber();
+    Booking booking(bookingNumber, flight, passenger, seat, price);
+    lock_guard<mutex> guard(mtx);
+    bookings[bookingNumber] = booking;
+    return booking;
+}
+Purpose in the Code:
+
+Centralizes and encapsulates the creation of Booking objects.
+Ensures consistent initialization of Booking objects with a unique booking number and proper storage in the bookings map.
+3. Strategy Pattern (Potential)
+Where Applicable:
+
+The design has potential for the Strategy Pattern in payment processing.
+Description:
+
+The Strategy pattern allows defining a family of algorithms (e.g., payment methods) and makes them interchangeable at runtime.
+Current Limitation:
+
+While the PaymentProcessor and Payment classes are not present in this specific snippet, the current design could be extended to use the Strategy Pattern for handling different payment methods.
+Implementation Suggestion:
+
+Define a base PaymentMethod class and derive concrete classes like CreditCardPayment, PayPalPayment, etc.
+Use polymorphism to process payments dynamically.
+4. Observer Pattern (Potential)
+Where Applicable:
+
+The BookingManager could implement an Observer Pattern to notify other components (e.g., a notification system or refund manager) when bookings are created, canceled, or updated.
+Implementation Suggestion:
+
+Maintain a list of observers (e.g., notification services).
+Notify observers whenever there’s a significant event like booking creation or cancellation.
+5. Thread-Safe Design
+Where Used:
+
+The use of std::mutex and std::lock_guard in BookingManager ensures thread safety.
+Description:
+
+While not a formal design pattern, ensuring thread safety is a critical aspect of concurrent programming.
+The std::mutex protects shared resources (bookings map) from data races when accessed by multiple threads.
+Implementation in Code:
+
+The lock_guard<mutex> ensures the bookings map is accessed by only one thread at a time:
+cpp
+Copy code
+lock_guard<mutex> guard(mtx);
+bookings[bookingNumber] = booking;
+Purpose in the Code:
+
+Prevents data inconsistencies and ensures safe concurrent access.
