@@ -1,0 +1,218 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Account {
+private:
+    string accountNumber;
+    double balance;
+
+public:
+    Account(const string& accountNumber, double balance)
+        : accountNumber(accountNumber), balance(balance) {}
+
+    const string& getAccountNumber() const { return accountNumber; }
+
+    double getBalance() const { return balance; }
+
+    void debit(double amount) { balance -= amount; }
+
+    void credit(double amount) { balance += amount; }
+};
+
+class BankingService {
+private:
+    unordered_map<string, Account> accounts;
+
+public:
+    void createAccount(const string& accountNumber, double initialBalance) {
+        accounts.emplace(accountNumber, Account(accountNumber, initialBalance));
+    }
+
+    Account* getAccount(const string& accountNumber) {
+        auto it = accounts.find(accountNumber);
+        if (it != accounts.end()) {
+            return &(it->second);
+        }
+        return nullptr;
+    }
+
+    void processTransaction(Account& account, function<void(Account&)> transactionFunc) {
+        transactionFunc(account);
+    }
+};
+
+class CashDispenser {
+private:
+    int cashAvailable;
+    mutex dispenserMutex;
+
+public:
+    CashDispenser(int initialCash) : cashAvailable(initialCash) {}
+
+    void dispenseCash(int amount) {
+        lock_guard<mutex> lock(dispenserMutex);
+        if (amount > cashAvailable) {
+            throw runtime_error("Insufficient cash available in the ATM.");
+        }
+        cashAvailable -= amount;
+        cout << "Cash dispensed: " << amount << endl;
+    }
+};
+
+class Transaction {
+protected:
+    string transactionId;
+    Account* account;
+    double amount;
+
+public:
+    Transaction(const string& transactionId, Account* account, double amount)
+        : transactionId(transactionId), account(account), amount(amount) {}
+
+    virtual void execute() = 0;
+    virtual ~Transaction() = default;
+};
+
+class DepositTransaction : public Transaction {
+public:
+    DepositTransaction(const string& transactionId, Account* account, double amount)
+        : Transaction(transactionId, account, amount) {}
+
+    void execute() override {
+        account->credit(amount);
+    }
+};
+
+class WithdrawalTransaction : public Transaction {
+public:
+    WithdrawalTransaction(const string& transactionId, Account* account, double amount)
+        : Transaction(transactionId, account, amount) {}
+
+    void execute() override {
+        account->debit(amount);
+    }
+};
+
+class Card {
+private:
+    string cardNumber;
+    string pin;
+
+public:
+    Card(const string& cardNumber, const string& pin)
+        : cardNumber(cardNumber), pin(pin) {}
+
+    const string& getCardNumber() const { return cardNumber; }
+    const string& getPin() const { return pin; }
+};
+
+class ATM {
+private:
+    BankingService* bankingService;
+    CashDispenser* cashDispenser;
+    static atomic<long> transactionCounter;
+
+    string generateTransactionId() {
+        long transactionNumber = transactionCounter.fetch_add(1);
+        auto now = time(nullptr);
+        ostringstream oss;
+        oss << "TXN" << put_time(localtime(&now), "%Y%m%d%H%M%S") << transactionNumber;
+        return oss.str();
+    }
+
+public:
+    ATM(BankingService* bankingService, CashDispenser* cashDispenser)
+        : bankingService(bankingService), cashDispenser(cashDispenser) {}
+
+    void authenticateUser(const Card& card) {
+        if (!card.getCardNumber().empty() && !card.getPin().empty()) {
+            cout << "User authenticated with card: " << card.getCardNumber() << endl;
+        } else {
+            cout << "Authentication failed: Invalid card or PIN." << endl;
+        }
+    }
+
+    double checkBalance(const string& accountNumber) {
+        Account* account = bankingService->getAccount(accountNumber);
+        if (account) {
+            return account->getBalance();
+        }
+        throw runtime_error("Account not found.");
+    }
+
+    void withdrawCash(const string& accountNumber, double amount) {
+        Account* account = bankingService->getAccount(accountNumber);
+        if (account && account->getBalance() >= amount) {
+            string transactionId = generateTransactionId();
+            WithdrawalTransaction transaction(transactionId, account, amount);
+            transaction.execute();
+            cashDispenser->dispenseCash(static_cast<int>(amount));
+        } else {
+            cout << "Error: Insufficient balance or account not found." << endl;
+        }
+    }
+
+    void depositCash(const string& accountNumber, double amount) {
+        Account* account = bankingService->getAccount(accountNumber);
+        if (account) {
+            string transactionId = generateTransactionId();
+            DepositTransaction transaction(transactionId, account, amount);
+            transaction.execute();
+        } else {
+            throw runtime_error("Account not found.");
+        }
+    }
+};
+
+atomic<long> ATM::transactionCounter{0};
+
+int main() {
+    BankingService bankingService;
+    CashDispenser cashDispenser(10000);
+    ATM atm(&bankingService, &cashDispenser);
+
+    bankingService.createAccount("1234567890", 1000.0);
+    bankingService.createAccount("9876543210", 500.0);
+
+    Card card("1234567890", "1234");
+    atm.authenticateUser(card);
+
+    double balance = atm.checkBalance("1234567890");
+    cout << "Account balance: " << balance << endl;
+
+    atm.withdrawCash("1234567890", 500.0);
+    atm.depositCash("9876543210", 200.0);
+
+    balance = atm.checkBalance("1234567890");
+    cout << "Updated account balance: " << balance << endl;
+
+    return 0;
+}
+
+
+//code:
+User authenticated with card: 1234567890
+Account balance: 1000
+Cash dispensed: 500
+Updated account balance: 500
+
+
+Design pattern:
+The code provided follows several design principles and employs aspects of multiple design patterns, making it modular, maintainable, and extensible. Here's an analysis of the patterns used:
+
+1. Factory Pattern (Implicit)
+Where?
+The BankingService class acts as a factory for creating Account objects.
+The createAccount method is responsible for instantiating and storing accounts in the system.
+2. Strategy Pattern
+Where?
+The processTransaction method in BankingService accepts a std::function<void(Account&)> as a parameter, allowing the flexibility to apply different transaction strategies (like deposit, withdrawal, etc.) on an account.
+How?
+The exact behavior of the transaction is encapsulated and passed as a callable object, decoupling the BankingService from specific transaction logic.
+3. Template Method Pattern
+Where?
+The Transaction class defines the common structure for transactions with its abstract execute() method.
+Specific transaction types like DepositTransaction and WithdrawalTransaction override the execute() method to provide concrete implementations.
+4. Singleton Pattern (Potential but not enforced)
+Where?
+The ATM could be designed as a singleton to ensure there is only one instance of the ATM managing transactions in a particular region or system. However, the current code does not explicitly enforce singleton behavior.
