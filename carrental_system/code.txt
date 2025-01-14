@@ -1,0 +1,254 @@
+In C++, std::shared_ptr and std::unique_ptr are both smart pointers provided by the Standard Template Library (STL) to manage dynamic memory safely and automatically, reducing the risk of memory leaks. However, they are used in different scenarios and have distinct behaviors.
+
+std::shared_ptr
+A std::shared_ptr is a smart pointer that allows multiple shared_ptr instances to share ownership of the same dynamically allocated object. The object is destroyed when the last shared_ptr that owns it is destroyed or reset.
+
+Key Features:
+Reference Counting: Internally uses reference counting to track how many shared_ptrs own the object.
+Shared Ownership: Multiple shared_ptrs can own the same object.
+Thread-Safe Reference Count: The reference count modification is thread-safe.
+Control Block: Stores metadata (e.g., reference count and deleter) separate from the object itself.
+Example:
+cpp
+Copy code
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::shared_ptr<int> sp1 = std::make_shared<int>(10); // Shared ownership
+    std::shared_ptr<int> sp2 = sp1; // sp2 shares ownership with sp1
+
+    std::cout << "Value: " << *sp1 << ", Ref count: " << sp1.use_count() << std::endl;
+
+    sp2.reset(); // Release sp2's ownership
+    std::cout << "After reset, Ref count: " << sp1.use_count() << std::endl;
+
+    return 0;
+}
+Use Cases:
+When multiple parts of a program need shared access to the same resource.
+For resources with non-trivial destruction or cleanup logic.
+std::unique_ptr
+A std::unique_ptr is a smart pointer that has sole ownership of a dynamically allocated object. The object is destroyed when the unique_ptr goes out of scope or is explicitly reset.
+
+Key Features:
+Exclusive Ownership: Only one unique_ptr can own a particular object.
+No Reference Counting: Simpler and lightweight compared to shared_ptr.
+Transfer of Ownership: Ownership can be transferred using std::move.
+Example:
+cpp
+Copy code
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::unique_ptr<int> up1 = std::make_unique<int>(20); // Unique ownership
+    std::cout << "Value: " << *up1 << std::endl;
+
+    std::unique_ptr<int> up2 = std::move(up1); // Transfer ownership
+    if (!up1) {
+        std::cout << "up1 is now empty" << std::endl;
+    }
+    std::cout << "Value in up2: " << *up2 << std::endl;
+
+    return 0;
+}
+Use Cases:
+When only one owner is required.
+For lightweight, non-shared resources.
+To ensure exclusive control over a resource.
+Comparison
+Feature	std::shared_ptr	std::unique_ptr
+Ownership	Shared (multiple owners)	Exclusive (single owner)
+Reference Count	Yes	No
+Thread-Safe	Yes (reference count)	No
+Memory Overhead	Higher (control block)	Lower
+Transfer Ownership	No need to transfer	Must use std::move
+Use Cases	Shared ownership	Exclusive ownership
+Choose std::shared_ptr when you need shared ownership and std::unique_ptr when you need exclusive ownership. Use them wisely based on your program's requirements!
+
+
+
+***********************************
+code:
+#include <bits/stdc++.h>
+using namespace std;
+
+// Utility to generate unique reservation IDs
+string generateReservationId() {
+    stringstream ss;
+    ss << "RES" << rand() % 100000;
+    return ss.str();
+}
+
+// Abstract base class (PaymentProcessor)
+class PaymentProcessor {
+public:
+    virtual bool processPayment(double amount) = 0; // Pure virtual function
+    virtual ~PaymentProcessor() = default;
+};
+
+// PayPal Payment Processor
+class PayPalPaymentProcessor : public PaymentProcessor {
+public:
+    bool processPayment(double amount) override {
+        cout << "Processing payment of $" << amount << " via PayPal..." << endl;
+        return true; // Simulate successful payment
+    }
+};
+
+// Credit Card Payment Processor
+class CreditCardPaymentProcessor : public PaymentProcessor {
+public:
+    bool processPayment(double amount) override {
+        cout << "Processing payment of $" << amount << " via Credit Card..." << endl;
+        return true; // Simulate successful payment
+    }
+};
+
+// Car Class
+class Car {
+    string licensePlate;
+    double rentalPricePerDay;
+    bool available;
+
+public:
+    Car(const string& licensePlate, double rentalPrice)
+        : licensePlate(licensePlate), rentalPricePerDay(rentalPrice), available(true) {}
+
+    double getRentalPricePerDay() const { return rentalPricePerDay; }
+    const string& getLicensePlate() const { return licensePlate; }
+    bool isAvailable() const { return available; }
+    void setAvailable(bool isAvailable) { available = isAvailable; }
+};
+
+// Customer Class
+class Customer {
+    string name;
+
+public:
+    explicit Customer(const string& name) : name(name) {}
+};
+
+// Reservation Class
+class Reservation {
+    string reservationId;
+    Car* car;
+    double totalPrice;
+
+public:
+    Reservation(const string& id, Car* car, int days)
+        : reservationId(id), car(car), totalPrice(car->getRentalPricePerDay() * days) {}
+
+    double getTotalPrice() const { return totalPrice; }
+    const string& getReservationId() const { return reservationId; }
+};
+
+// Rental System Class
+class RentalSystem {
+    unordered_map<string, Car*> cars;
+    PaymentProcessor* paymentProcessor;
+
+public:
+    RentalSystem(PaymentProcessor* processor) : paymentProcessor(processor) {}
+
+    ~RentalSystem() {
+        for (auto& [license, car] : cars) {
+            delete car; // Free memory for each car
+        }
+        delete paymentProcessor; // Free memory for payment processor
+    }
+
+    void addCar(Car* car) {
+        cars[car->getLicensePlate()] = car;
+    }
+
+    vector<Car*> searchCars() {
+        vector<Car*> availableCars;
+        for (const auto& [license, car] : cars) {
+            if (car->isAvailable()) {
+                availableCars.push_back(car);
+            }
+        }
+        return availableCars;
+    }
+
+    Reservation* makeReservation(Customer* customer, Car* car, int days) {
+        if (car->isAvailable()) {
+            string reservationId = generateReservationId();
+            auto reservation = new Reservation(reservationId, car, days);
+            car->setAvailable(false);
+            return reservation;
+        }
+        return nullptr;
+    }
+
+    bool processPayment(Reservation* reservation) {
+        return paymentProcessor->processPayment(reservation->getTotalPrice());
+    }
+};
+
+// Main Function
+int main() {
+    srand(time(0));
+
+    // Step 1: Create Rental System with CreditCardPaymentProcessor
+    RentalSystem rentalSystem(new CreditCardPaymentProcessor());
+
+    // Step 2: Add Cars
+    Car* car1 = new Car("ABC123", 50.0);
+    Car* car2 = new Car("XYZ789", 60.0);
+    rentalSystem.addCar(car1);
+    rentalSystem.addCar(car2);
+
+    // Step 3: Search Cars
+    cout << "Available cars:" << endl;
+    auto availableCars = rentalSystem.searchCars();
+    for (auto car : availableCars) {
+        cout << "- License Plate: " << car->getLicensePlate() << ", Price: $" << car->getRentalPricePerDay() << "/day" << endl;
+    }
+
+    // Step 4: Create Customer
+    Customer* customer = new Customer("John Doe");
+
+    // Step 5: Make Reservation
+    if (!availableCars.empty()) {
+        auto car = availableCars.front(); // Select the first available car
+        int rentalDays = 3;
+        Reservation* reservation = rentalSystem.makeReservation(customer, car, rentalDays);
+
+        if (reservation) {
+            cout << "Reservation successful. Reservation ID: " << reservation->getReservationId() << endl;
+
+            // Step 6: Process Payment
+            if (rentalSystem.processPayment(reservation)) {
+                cout << "Payment successful." << endl;
+            } else {
+                cout << "Payment failed. Reservation canceled." << endl;
+            }
+
+            delete reservation; // Free memory for reservation
+        } else {
+            cout << "Car is not available for reservation." << endl;
+        }
+    } else {
+        cout << "No cars available for reservation." << endl;
+    }
+
+    // Free memory for customer
+    delete customer;
+
+    return 0;
+}
+
+
+
+output:
+Available cars:
+- License Plate: ABC123, Price: $50/day
+- License Plate: XYZ789, Price: $60/day
+Reservation successful. Reservation ID: RES85743
+Processing payment of $150 via Credit Card...
+Payment successful.
+
+

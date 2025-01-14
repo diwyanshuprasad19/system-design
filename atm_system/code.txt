@@ -36,9 +36,6 @@ public:
         return nullptr;
     }
 
-    void processTransaction(Account& account, function<void(Account&)> transactionFunc) {
-        transactionFunc(account);
-    }
 };
 
 class CashDispenser {
