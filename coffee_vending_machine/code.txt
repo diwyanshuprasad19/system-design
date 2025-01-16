@@ -1,0 +1,245 @@
+code:
+Steps to Add Thread Safety:
+Introduce a Mutex:
+
+Use std::mutex to protect shared resources (ingredients and coffeeMenu) from concurrent access.
+Protect Critical Sections:
+
+Use std::lock_guard or std::unique_lock to ensure that shared resources are accessed by one thread at a time.
+Simulate Concurrent User Requests:
+
+Use std::thread to create multiple threads, each representing a user request.
+Modified Code with Thread Safety:
+cpp
+Copy code
+#include <bits/stdc++.h>
+#include <thread>
+#include <mutex>
+
+using namespace std;
+
+class Ingredient {
+private:
+    string name;
+    int quantity;
+
+public:
+    Ingredient(string name, int quantity) : name(name), quantity(quantity) {}
+
+    string getName() const {
+        return name;
+    }
+
+    int getQuantity() const {
+        return quantity;
+    }
+
+    void updateQuantity(int amount) {
+        quantity += amount;
+    }
+};
+
+class Payment {
+private:
+    double amount;
+
+public:
+    Payment(double amount) : amount(amount) {}
+
+    double getAmount() const {
+        return amount;
+    }
+};
+
+class Coffee {
+private:
+    string name;
+    double price;
+    map<string, int> recipe;
+
+public:
+    Coffee(string name, double price, map<string, int> recipe) : name(name), price(price), recipe(recipe) {}
+
+    string getName() const {
+        return name;
+    }
+
+    double getPrice() const {
+        return price;
+    }
+
+    map<string, int> getRecipe() const {
+        return recipe;
+    }
+};
+
+class CoffeeMachine {
+private:
+    vector<Coffee> coffeeMenu;
+    map<string, Ingredient> ingredients;
+    mutex machineMutex; // Mutex to protect shared resources
+
+    CoffeeMachine() {
+        initializeIngredients();
+        initializeCoffeeMenu();
+    }
+
+    void initializeIngredients() {
+        ingredients["Coffee"] = Ingredient("Coffee", 10);
+        ingredients["Water"] = Ingredient("Water", 10);
+        ingredients["Milk"] = Ingredient("Milk", 10);
+    }
+
+    void initializeCoffeeMenu() {
+        map<string, int> espressoRecipe = {{"Coffee", 1}, {"Water", 1}};
+        coffeeMenu.emplace_back("Espresso", 2.5, espressoRecipe);
+
+        map<string, int> cappuccinoRecipe = {{"Coffee", 1}, {"Water", 1}, {"Milk", 1}};
+        coffeeMenu.emplace_back("Cappuccino", 3.5, cappuccinoRecipe);
+
+        map<string, int> latteRecipe = {{"Coffee", 1}, {"Water", 1}, {"Milk", 2}};
+        coffeeMenu.emplace_back("Latte", 4.0, latteRecipe);
+    }
+
+    bool hasEnoughIngredients(const Coffee &coffee) {
+        for (const auto &entry : coffee.getRecipe()) {
+            string ingredientName = entry.first;
+            int requiredQuantity = entry.second;
+            if (ingredients[ingredientName].getQuantity() < requiredQuantity) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void updateIngredients(const Coffee &coffee) {
+        for (const auto &entry : coffee.getRecipe()) {
+            string ingredientName = entry.first;
+            int requiredQuantity = entry.second;
+            ingredients[ingredientName].updateQuantity(-requiredQuantity);
+            if (ingredients[ingredientName].getQuantity() < 3) {
+                cout << "Low inventory alert: " << ingredientName << endl;
+            }
+        }
+    }
+
+public:
+    static CoffeeMachine &getInstance() {
+        static CoffeeMachine instance;
+        return instance;
+    }
+
+    void displayMenu() {
+        lock_guard<mutex> lock(machineMutex); // Lock the mutex
+        cout << "Coffee Menu:" << endl;
+        for (const auto &coffee : coffeeMenu) {
+            cout << coffee.getName() << " - $" << coffee.getPrice() << endl;
+        }
+    }
+
+    Coffee *selectCoffee(const string &coffeeName) {
+        lock_guard<mutex> lock(machineMutex); // Lock the mutex
+        for (auto &coffee : coffeeMenu) {
+            if (coffee.getName() == coffeeName) {
+                return &coffee;
+            }
+        }
+        return nullptr;
+    }
+
+    void dispenseCoffee(Coffee *coffee, const Payment &payment) {
+        if (!coffee) {
+            cout << "Coffee not found." << endl;
+            return;
+        }
+
+        lock_guard<mutex> lock(machineMutex); // Lock the mutex
+        if (payment.getAmount() >= coffee->getPrice()) {
+            if (hasEnoughIngredients(*coffee)) {
+                updateIngredients(*coffee);
+                cout << "Dispensing " << coffee->getName() << "..." << endl;
+                double change = payment.getAmount() - coffee->getPrice();
+                if (change > 0) {
+                    cout << "Please collect your change: $" << change << endl;
+                }
+            } else {
+                cout << "Insufficient ingredients to make " << coffee->getName() << endl;
+            }
+        } else {
+            cout << "Insufficient payment for " << coffee->getName() << endl;
+        }
+    }
+};
+
+void userRequest(const string &coffeeName, double paymentAmount) {
+    CoffeeMachine &coffeeMachine = CoffeeMachine::getInstance();
+    Coffee *coffee = coffeeMachine.selectCoffee(coffeeName);
+    coffeeMachine.dispenseCoffee(coffee, Payment(paymentAmount));
+}
+
+void CoffeeVendingMachineDemo() {
+    CoffeeMachine &coffeeMachine = CoffeeMachine::getInstance();
+    coffeeMachine.displayMenu();
+
+    // Create threads for multiple user requests
+    thread user1(userRequest, "Espresso", 3.0);
+    thread user2(userRequest, "Cappuccino", 3.5);
+    thread user3(userRequest, "Latte", 4.0);
+
+    // Wait for threads to complete
+    user1.join();
+    user2.join();
+    user3.join();
+}
+
+int main() {
+    CoffeeVendingMachineDemo();
+    return 0;
+}
+
+
+output:
+
+Coffee Menu:
+Espresso - $2.5
+Cappuccino - $3.5
+Latte - $4.0
+
+Dispensing Espresso...
+Please collect your change: $0.5
+Dispensing Cappuccino...
+Dispensing Latte...
+
+
+
+
+Design pattern here:
+The design patterns followed in the provided code are:
+
+1. Singleton Pattern
+Usage: The CoffeeMachine class is implemented as a Singleton.
+Details: The CoffeeMachine ensures that only one instance of the class exists, and it provides a global point of access to that instance.
+Implementation:
+cpp
+Copy code
+static CoffeeMachine &getInstance() {
+    static CoffeeMachine instance;
+    return instance;
+}
+Purpose: This pattern ensures that the coffee machine's state (e.g., menu, ingredients) is globally accessible and consistent across the application.
+2. Factory Pattern (Basic Form)
+Usage: The code demonstrates elements of the Factory Pattern in how the initializeCoffeeMenu method creates and adds different Coffee objects to the menu.
+Details: While it is not a full-fledged factory implementation, the method centralizes the creation of coffee types.
+Purpose: This pattern simplifies the instantiation of specific Coffee objects with predefined properties like name, price, and recipe.
+3. Strategy Pattern (Potential Enhancement)
+Usage: While not explicitly implemented, the dispenseCoffee method could benefit from the Strategy Pattern if the payment processing or ingredient validation logic were abstracted into interchangeable strategies.
+Details: For example, different payment methods (e.g., cash, card, mobile wallet) or dynamic inventory management could be implemented as strategies.
+Purpose: The Strategy Pattern enables flexibility in extending behaviors without modifying the core CoffeeMachine logic.
+4. Observer Pattern (Low Inventory Alert - Potential Use)
+Usage: The updateIngredients method prints a low inventory alert when an ingredient quantity falls below 3.
+Details: While currently implemented as a direct check, this could be extended to follow the Observer Pattern, where the coffee machine notifies observers (e.g., a monitoring system or user interface) about inventory changes.
+Purpose: This decouples the inventory management from the machine’s operations, enhancing scalability.
+Summary
+Singleton is the primary design pattern implemented here for managing the coffee machine's global state.
+Factory is partially used for menu initialization.
+Strategy and Observer could be implemented for added flexibility and scalability.

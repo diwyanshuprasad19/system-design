@@ -1,0 +1,260 @@
+code:
+#include <bits/stdc++.h>
+using namespace std;
+
+// Enum for SeatType
+enum class SeatType {
+    REGULAR,
+    PREMIUM,
+    VIP
+};
+
+// Enum for SeatStatus
+enum class SeatStatus {
+    AVAILABLE,
+    BOOKED,
+    RESERVED
+};
+
+// Enum for BookingStatus
+enum class BookingStatus {
+    PENDING,
+    CONFIRMED,
+    CANCELLED
+};
+
+// Exception for seat unavailability
+class SeatNotAvailableException : public runtime_error {
+public:
+    explicit SeatNotAvailableException(const string &message)
+        : runtime_error(message) {}
+};
+
+// User class
+class User {
+private:
+    string id;
+    string name;
+    string email;
+
+public:
+    User(const string &id, const string &name, const string &email)
+        : id(id), name(name), email(email) {}
+
+    string getId() const { return id; }
+    string getName() const { return name; }
+    string getEmail() const { return email; }
+};
+
+// Forward declaration of Concert class
+class Concert;
+
+// Seat class
+class Seat {
+private:
+    string id;
+    string seatNumber;
+    SeatType seatType;
+    double price;
+    SeatStatus status;
+
+public:
+    Seat(const string &id, const string &seatNumber, SeatType seatType, double price)
+        : id(id), seatNumber(seatNumber), seatType(seatType), price(price), status(SeatStatus::AVAILABLE) {}
+
+    void book() {
+        if (status == SeatStatus::AVAILABLE) {
+            status = SeatStatus::BOOKED;
+        } else {
+            throw SeatNotAvailableException("Seat is already booked or reserved.");
+        }
+    }
+
+    void release() {
+        if (status == SeatStatus::BOOKED) {
+            status = SeatStatus::AVAILABLE;
+        }
+    }
+
+    double getPrice() const { return price; }
+    string getId() const { return id; }
+    string getSeatNumber() const { return seatNumber; }
+    SeatType getSeatType() const { return seatType; }
+    SeatStatus getStatus() const { return status; }
+};
+
+// Booking class
+class Booking {
+private:
+    string id;
+    User user;
+    Concert &concert;
+    vector<Seat> seats;
+    double totalPrice;
+    BookingStatus status;
+
+    double calculateTotalPrice() {
+        double total = 0;
+        for (const auto &seat : seats) {
+            total += seat.getPrice();
+        }
+        return total;
+    }
+
+public:
+    Booking(const string &id, const User &user, Concert &concert, const vector<Seat> &seats)
+        : id(id), user(user), concert(concert), seats(seats), totalPrice(calculateTotalPrice()), status(BookingStatus::PENDING) {}
+
+    void confirmBooking() {
+        if (status == BookingStatus::PENDING) {
+            status = BookingStatus::CONFIRMED;
+            cout << "Booking " << id << " confirmed." << endl;
+        }
+    }
+
+    void cancelBooking() {
+        if (status == BookingStatus::CONFIRMED) {
+            status = BookingStatus::CANCELLED;
+            for (auto &seat : seats) {
+                seat.release();
+            }
+            cout << "Booking " << id << " cancelled." << endl;
+        }
+    }
+
+    string getId() const { return id; }
+    double getTotalPrice() const { return totalPrice; }
+};
+
+// Concert class
+class Concert {
+private:
+    string id;
+    string artist;
+    string venue;
+    tm dateTime;
+    vector<Seat> seats;
+
+public:
+    Concert(const string &id, const string &artist, const string &venue, tm dateTime, const vector<Seat> &seats)
+        : id(id), artist(artist), venue(venue), dateTime(dateTime), seats(seats) {}
+
+    vector<Seat> &getSeats() { return seats; }
+    string getId() const { return id; }
+    string getArtist() const { return artist; }
+    string getVenue() const { return venue; }
+    tm getDateTime() const { return dateTime; }
+};
+
+// ConcertTicketBookingSystem class
+class ConcertTicketBookingSystem {
+private:
+    static ConcertTicketBookingSystem *instance;
+    unordered_map<string, Concert> concerts;
+    unordered_map<string, Booking> bookings;
+
+    ConcertTicketBookingSystem() = default;
+
+    string generateBookingId() {
+        return "BKG" + to_string(rand());
+    }
+
+public:
+    static ConcertTicketBookingSystem *getInstance() {
+        if (!instance) {
+            instance = new ConcertTicketBookingSystem();
+        }
+        return instance;
+    }
+
+    void addConcert(const Concert &concert) {
+        concerts[concert.getId()] = concert;
+    }
+
+    vector<Concert> searchConcerts(const string &artist, const string &venue, tm dateTime) {
+        vector<Concert> results;
+        for (const auto &[id, concert] : concerts) {
+            if (concert.getArtist() == artist && concert.getVenue() == venue) {
+                results.push_back(concert);
+            }
+        }
+        return results;
+    }
+
+    Booking bookTickets(const User &user, Concert &concert, vector<Seat> &seats) {
+        for (auto &seat : seats) {
+            if (seat.getStatus() != SeatStatus::AVAILABLE) {
+                throw SeatNotAvailableException("Seat is not available.");
+            }
+            seat.book();
+        }
+
+        string bookingId = generateBookingId();
+        Booking booking(bookingId, user, concert, seats);
+        bookings[bookingId] = booking;
+        booking.confirmBooking();
+
+        return booking;
+    }
+};
+
+ConcertTicketBookingSystem *ConcertTicketBookingSystem::instance = nullptr;
+
+// Main function to demonstrate functionality
+int main() {
+    // Initialize system
+    ConcertTicketBookingSystem *system = ConcertTicketBookingSystem::getInstance();
+
+    // Create sample data
+    tm dateTime = {};
+    dateTime.tm_year = 2025 - 1900;
+    dateTime.tm_mon = 1;
+    dateTime.tm_mday = 20;
+
+    vector<Seat> seats;
+    for (int i = 1; i <= 10; ++i) {
+        string seatNumber = "S" + to_string(i);
+        SeatType type = (i <= 3) ? SeatType::VIP : (i <= 6) ? SeatType::PREMIUM : SeatType::REGULAR;
+        double price = (type == SeatType::VIP) ? 100 : (type == SeatType::PREMIUM) ? 75 : 50;
+        seats.emplace_back(seatNumber, seatNumber, type, price);
+    }
+
+    Concert concert("C001", "Artist A", "Venue 1", dateTime, seats);
+    system->addConcert(concert);
+
+    User user("U001", "John Doe", "john@example.com");
+
+    // Book tickets
+    vector<Seat> selectedSeats = {seats[0], seats[1]}; // Selecting first two seats
+    Booking booking = system->bookTickets(user, concert, selectedSeats);
+
+    // Output results
+    cout << "Total Price: $" << booking.getTotalPrice() << endl;
+
+    return 0;
+}
+
+
+
+output:
+Booking BKG167388123 confirmed.
+Total Price: $200
+
+
+
+Design pattern:
+1. Singleton Pattern
+Where it's used: The ConcertTicketBookingSystem class.
+Purpose: Ensures that only one instance of the ticket booking system exists throughout the application.
+Implementation:
+A private static member instance.
+A private constructor to prevent external instantiation.
+A public static method getInstance() to return the single instance of the class.
+Why it's used here: The ticket booking system should have a single point of access to manage concerts, bookings, and related operations.
+2. Factory/Builder-Like Pattern (Implicitly)
+Where it's used: Seat creation in the main function.
+Purpose: Simplifies the creation of Seat objects based on certain attributes (like SeatType and price).
+Implementation:
+A loop dynamically creates a list of seats with attributes like type and price derived programmatically.
+Why it's used here: Automates the creation of similar objects with minor variations (e.g., VIP, PREMIUM, REGULAR seats).
+
