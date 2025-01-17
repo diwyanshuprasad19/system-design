@@ -1,0 +1,185 @@
+code:
+#include <bits/stdc++.h>
+using namespace std;
+
+class Course;
+
+class Student {
+private:
+    int id;
+    string name;
+    string email;
+    vector<Course*> registeredCourses;
+
+public:
+    Student(int id, const string &name, const string &email)
+        : id(id), name(name), email(email) {}
+
+    int getId() const { return id; }
+    string getName() const { return name; }
+    string getEmail() const { return email; }
+    vector<Course*>& getRegisteredCourses() { return registeredCourses; }
+};
+
+class Course {
+private:
+    string code;
+    string name;
+    string instructor;
+    int maxCapacity;
+    int enrolledStudents;
+
+public:
+    Course(const string &code, const string &name, const string &instructor, int maxCapacity)
+        : code(code), name(name), instructor(instructor), maxCapacity(maxCapacity), enrolledStudents(0) {}
+
+    string getCode() const { return code; }
+    string getName() const { return name; }
+    string getInstructor() const { return instructor; }
+    int getMaxCapacity() const { return maxCapacity; }
+    int getEnrolledStudents() const { return enrolledStudents; }
+    void setEnrolledStudents(int count) { enrolledStudents = count; }
+};
+
+class Registration {
+private:
+    Student* student;
+    Course* course;
+    time_t registrationTime;
+
+public:
+    Registration(Student* student, Course* course)
+        : student(student), course(course), registrationTime(time(nullptr)) {}
+};
+
+class CourseRegistrationSystem {
+private:
+    unordered_map<string, Course*> courses;
+    unordered_map<int, Student*> students;
+    vector<Registration*> registrations;
+    mutex mtx;
+
+    static CourseRegistrationSystem* instance;
+
+    CourseRegistrationSystem() {}
+
+public:
+    static CourseRegistrationSystem* getInstance() {
+        if (!instance) {
+            instance = new CourseRegistrationSystem();
+        }
+        return instance;
+    }
+
+    void addCourse(Course* course) {
+        lock_guard<mutex> lock(mtx);
+        courses[course->getCode()] = course;
+    }
+
+    void addStudent(Student* student) {
+        lock_guard<mutex> lock(mtx);
+        students[student->getId()] = student;
+    }
+
+    vector<Course*> searchCourses(const string &query) {
+        vector<Course*> result;
+        for (const auto &pair : courses) {
+            Course* course = pair.second;
+            if (course->getCode().find(query) != string::npos || course->getName().find(query) != string::npos) {
+                result.push_back(course);
+            }
+        }
+        return result;
+    }
+
+    bool registerCourse(Student* student, Course* course) {
+        lock_guard<mutex> lock(mtx);
+        if (course->getEnrolledStudents() < course->getMaxCapacity()) {
+            Registration* registration = new Registration(student, course);
+            registrations.push_back(registration);
+            student->getRegisteredCourses().push_back(course);
+            course->setEnrolledStudents(course->getEnrolledStudents() + 1);
+            return true;
+        }
+        return false;
+    }
+
+    vector<Course*> getRegisteredCourses(Student* student) {
+        return student->getRegisteredCourses();
+    }
+};
+
+CourseRegistrationSystem* CourseRegistrationSystem::instance = nullptr;
+
+int main() {
+    CourseRegistrationSystem* system = CourseRegistrationSystem::getInstance();
+
+    // Create courses
+    Course* course1 = new Course("CS101", "Introduction to Programming", "John Doe", 50);
+    Course* course2 = new Course("CS201", "Data Structures and Algorithms", "Jane Smith", 30);
+    system->addCourse(course1);
+    system->addCourse(course2);
+
+    // Create students
+    Student* student1 = new Student(1, "Alice", "alice@example.com");
+    Student* student2 = new Student(2, "Bob", "bob@example.com");
+    system->addStudent(student1);
+    system->addStudent(student2);
+
+    // Search for courses
+    vector<Course*> results = system->searchCourses("CS");
+    cout << "Search Results:\n";
+    for (Course* course : results) {
+        cout << course->getCode() << " - " << course->getName() << "\n";
+    }
+
+    // Register courses
+    bool registered1 = system->registerCourse(student1, course1);
+    bool registered2 = system->registerCourse(student2, course1);
+    bool registered3 = system->registerCourse(student1, course2);
+
+    cout << "\nRegistration Results:\n";
+    cout << "Student 1 - Course 1: " << (registered1 ? "Success" : "Failed") << "\n";
+    cout << "Student 2 - Course 1: " << (registered2 ? "Success" : "Failed") << "\n";
+    cout << "Student 1 - Course 2: " << (registered3 ? "Success" : "Failed") << "\n";
+
+    // Display registered courses for student 1
+    vector<Course*> registeredCourses = system->getRegisteredCourses(student1);
+    cout << "\nRegistered Courses for Student 1:\n";
+    for (Course* course : registeredCourses) {
+        cout << course->getCode() << " - " << course->getName() << "\n";
+    }
+
+    // Cleanup
+    delete course1;
+    delete course2;
+    delete student1;
+    delete student2;
+    for (Registration* registration : system->registrations) {
+        delete registration;
+    }
+
+    return 0;
+}
+
+
+output:
+Search Results:
+CS101 - Introduction to Programming
+CS201 - Data Structures and Algorithms
+
+Registration Results:
+Student 1 - Course 1: Success
+Student 2 - Course 1: Success
+Student 1 - Course 2: Success
+
+Registered Courses for Student 1:
+CS101 - Introduction to Programming
+CS201 - Data Structures and Algorithms
+
+
+System Design:
+Key Components and Design Principles
+1. Singleton Pattern
+Class: CourseRegistrationSystem
+Purpose: Ensures that only one instance of the CourseRegistrationSystem exists throughout the application's lifecycle. This centralizes control and avoids multiple conflicting instances.
