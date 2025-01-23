@@ -1,0 +1,65 @@
+Code:
+
+
+Ouput:
+
+Scorecard ID: SC-M001-1
+Match Title: Match 1
+Scores:
+Team T1: 150 runs
+Team T2: 120 runs
+Innings Details:
+Innings ID: I1
+Batting Team: T1
+Bowling Team: T2
+Over 1:
+  Ball 1: P202 to P101 - 4
+  Ball 2: P202 to P101 - 6
+
+
+
+Design pattern:
+1. Singleton Pattern
+Where:
+
+ScorecardService class
+MatchService class
+Purpose:
+The Singleton pattern ensures that there is only one instance of these service classes (ScorecardService and MatchService) throughout the application. This is achieved by:
+
+Making the constructor private.
+Providing a static getInstance method to retrieve the single instance.
+Advantages:
+
+Centralized control over shared resources.
+Efficient use of memory for services that need global access.
+2. Factory Pattern
+Where:
+
+The createScorecard method in the ScorecardService class.
+Purpose:
+The Factory pattern is used to create Scorecard objects. Instead of directly instantiating the Scorecard class in multiple places, the createScorecard method abstracts the creation process and ensures consistent initialization.
+
+Advantages:
+
+Decouples the instantiation logic from the client code.
+Makes the creation process reusable and centralized.
+3. Builder Pattern (Implicit)
+Where:
+
+Construction of Over, Innings, and Match objects.
+Purpose:
+Although not explicitly following the Builder pattern, the sequence of method calls like addBall (to Over), addOver (to Innings), and creating a complete Match object mimics the Builder pattern. This approach helps in constructing complex objects step-by-step.
+
+Advantages:
+
+Simplifies the construction of complex objects.
+Improves code readability by breaking down the construction into smaller steps.
+4. Observer Pattern (Potential Use)
+Where:
+
+Could be applied to notify changes in the match status or score updates.
+Purpose:
+The current implementation doesn't explicitly include the Observer pattern, but it can be extended to notify interested components (e.g., a user interface or external API) whenever the match score or status changes. For example:
+
+When updateScore is called, all observers (like a scoreboard display) can be notified.
