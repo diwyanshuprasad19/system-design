@@ -1,0 +1,84 @@
+Ques:Create a thread pool
+
+Eplaination:https://docs.google.com/document/d/1EFZgrLS0hD3Z7kLYj4pLbQgWkUqYPhcMKOA_3y-hMsY/edit?tab=t.0
+
+
+code.txt:
+#include <bits/stdc++.h>
+using namespace std;
+
+class ThreadPool {
+private:
+    vector<thread> workers;                  // Worker threads
+    queue<function<void()>> taskQueue;       // Task queue
+    mutex queueMutex;                        // Mutex for thread safety
+    condition_variable condition;            // Condition variable for synchronization
+    bool stop;                               // Flag to stop the thread pool
+
+public:
+    ThreadPool(size_t numThreads);
+    ~ThreadPool();
+    
+    void submit(function<void()> task);
+};
+
+// Constructor: Create worker threads
+ThreadPool::ThreadPool(size_t numThreads) : stop(false) {
+    for (size_t i = 0; i < numThreads; ++i) {
+        workers.emplace_back([this] {
+            while (true) {
+                function<void()> task;
+                {
+                    unique_lock<mutex> lock(queueMutex);
+                    condition.wait(lock, [this] { return stop || !taskQueue.empty(); });
+
+                    if (stop && taskQueue.empty())
+                        return;
+
+                    task = move(taskQueue.front());
+                    taskQueue.pop();
+                }
+                task();
+            }
+        });
+    }
+}
+
+// Destructor: Join all threads
+ThreadPool::~ThreadPool() {
+    {
+        unique_lock<mutex> lock(queueMutex);
+        stop = true;
+    }
+    condition.notify_all();
+    for (thread &worker : workers) {
+        worker.join();
+    }
+}
+
+// Submit a task to the queue
+void ThreadPool::submit(function<void()> task) {
+    {
+        unique_lock<mutex> lock(queueMutex);
+        taskQueue.push(move(task));
+    }
+    condition.notify_one();
+}
+
+// Test function to simulate work
+void testTask(int taskNumber) {
+    cout << "Executing Task " << taskNumber << " on thread " 
+         << this_thread::get_id() << endl;
+    this_thread::sleep_for(chrono::seconds(1)); // Simulate work
+}
+
+int main() {
+    ThreadPool threadPool(3);  // Create a thread pool with 3 threads
+
+    for (int i = 1; i <= 7; i++) {
+        threadPool.submit([i] { testTask(i); });
+    }
+
+    this_thread::sleep_for(chrono::seconds(5)); // Wait for all tasks to complete
+    return 0;
+}
