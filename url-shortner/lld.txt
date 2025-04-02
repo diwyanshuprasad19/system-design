@@ -1,0 +1,127 @@
+2. Low-Level Design (LLD) - Detailed Explanation
+🌩️ Component 1: Client Application
+Can be Web, Mobile, or CLI-based.
+
+Communicates via HTTP Requests (REST APIs) or GraphQL.
+
+🌩️ Component 2: Load Balancer
+Tools: Nginx, HAProxy, AWS ELB (Elastic Load Balancing).
+
+Purpose: Ensures high availability and distributes traffic evenly across multiple application servers.
+
+🌩️ Component 3: Application Server
+This is where the actual URL shortening logic resides.
+
+✅ Functionalities:
+Short URL Generation:
+
+Receives a long URL and generates a random 6-character alias.
+
+Stores the alias and original URL in the main database.
+
+Supports custom aliases if provided by the user.
+
+Redirection:
+
+When a short URL is accessed, the application server:
+
+Checks Cache (Redis) for a quick lookup.
+
+If not found, checks the Database.
+
+If expired, moves it to S3/Glacier.
+
+Caching:
+
+Most popular URLs are stored in Redis.
+
+Implements TTL and LRU Eviction Policy.
+
+Evicts least frequently accessed URLs automatically.
+
+URL Expiration Handling:
+
+Automatically deletes URLs when they expire.
+
+Moves expired URLs to S3/Glacier for backup.
+
+🌩️ Component 4: Caching Layer (Redis / Memcached)
+Purpose: Improve read speed by storing popular URLs.
+
+Mechanism:
+
+TTL-based Eviction: Automatically removes expired URLs.
+
+LRU-based Eviction: Removes least accessed URLs to free memory.
+
+🌩️ Component 5: Main Database (DynamoDB / SQL / NoSQL)
+Active URLs Only:
+
+Uses TTL attribute (DynamoDB) or a separate process for expiration handling (SQL/NoSQL).
+
+Data Structure:
+
+plaintext
+Copy
+Edit
+Table: URLs
+- alias (Primary Key)
+- long_url (String)
+- created_at (Timestamp)
+- expiration_time (Timestamp)
+- click_count (Integer)
+🌩️ Component 6: Expired URL Storage (S3 / Glacier)
+Stores expired URLs as JSON/CSV files.
+
+Cold Storage Options: S3 IA, S3 Glacier, Glacier Deep Archive.
+
+Purpose: Reduce database load and maintain URL history for analytics.
+
+🌩️ Component 7: Analytics & Metrics (Redshift / BigQuery)
+Periodically imports data from S3 for analysis.
+
+Generates reports on:
+
+Most accessed URLs.
+
+Usage patterns.
+
+Trends and anomalies.
+
+🌩️ Component 8: Background Cleaner Process
+Runs periodically via:
+
+Celery / Cron Jobs (Python/Django).
+
+Workers (Node.js).
+
+Spring Scheduler (Java).
+
+Tasks:
+
+Deletes expired URLs from the main database.
+
+Moves data to S3 for backup.
+
+📌 3. Test Cases (For Testing The System)
+Test Case	Expected Output
+Generate Short URL	Returns unique alias.
+Retrieve URL from Alias	Returns original URL.
+Expired URL Access	Returns 404 or error message.
+Caching Check	URL is served from Redis if cached.
+Custom Alias Creation	Returns alias if available, error if taken.
+Background Cleanup	Expired URLs moved to S3.
+Analytics Generation	Generates reports from S3.
+📌 4. Scalability Considerations
+Database Sharding:
+
+Partition URLs across multiple databases.
+
+Cache Replication:
+
+Redis Cluster for improved availability.
+
+Asynchronous Processing:
+
+Using Message Queues (SQS/Kafka) to process expired URLs.
+

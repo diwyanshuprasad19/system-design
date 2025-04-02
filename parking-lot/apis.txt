@@ -1,0 +1,317 @@
+Unified API Endpoints (Public & Internal)
+Public Endpoints
+These endpoints are accessible by users (vehicles/drivers).
+
+✅ 1. Reserve a Spot
+URL: /reserve
+
+Method: POST
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "garage_id": 1,
+  "start_time": "2025-03-23T09:00:00",
+  "end_time": "2025-03-23T12:00:00"
+}
+Response (201 - Created):
+
+json
+Copy
+Edit
+{
+  "message": "Reservation created successfully.",
+  "spot_id": 12,
+  "reservation_id": 201
+}
+
+
+✅ 2. Make Payment
+URL: /payment
+
+Method: POST
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "reservation_id": 201,
+  "payment_method": "CARD",
+  "amount": 20.0
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "message": "Payment successful.",
+  "transaction_id": 301
+}
+
+
+
+✅ 3. Cancel Reservation
+URL: /cancel
+
+Method: DELETE
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "reservation_id": 201
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "message": "Reservation cancelled successfully."
+}
+Internal Endpoints
+These endpoints are for internal use (System Management, Admins, etc.).
+
+
+
+
+
+✅ 4. Calculate Payment
+URL: /calculate_payment
+
+Method: GET
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "reservation_id": 201
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "amount": 20.0,
+  "fare_breakdown": {
+    "base_fare": 10.0,
+    "additional_fare": 10.0
+  }
+}
+
+
+
+
+
+✅ 5. Create Account
+URL: /create_account
+
+Method: POST
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "first_name": "John",
+  "last_name": "Doe"
+}
+Response (201 - Created):
+
+json
+Copy
+Edit
+{
+  "message": "Account created successfully.",
+  "user_id": 101
+}
+
+
+
+
+✅ 6. Login
+URL: /login
+
+Method: POST
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "message": "Login successful.",
+  "user_id": 101,
+  "token": "abcd1234"
+}
+
+
+
+✅ 7. Check Free Spots
+URL: /freespots
+
+Method: GET
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "garage_id": 1,
+  "vehicle_type": "CAR",
+  "time": "2025-03-23T09:00:00"
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "available_spots": [12, 14, 16, 18]
+}
+
+
+
+✅ 8. Allocate Spot (Without Reservation)
+URL: /allocate_spot
+
+Method: POST
+
+Parameters:
+
+json
+Copy
+Edit
+{
+  "garage_id": 1,
+  "vehicle_type": "CAR",
+  "time": "2025-03-23T09:00:00"
+}
+Response (201 - Created):
+
+json
+Copy
+Edit
+{
+  "message": "Spot allocated successfully.",
+  "spot_id": 14
+}
+🔍 Additional Public Endpoints (From Previous Discussion)
+
+
+
+
+
+✅ 9. Register Vehicle
+URL: /api/vehicles/register
+
+Method: POST
+
+Request Body:
+
+json
+Copy
+Edit
+{
+  "vehicle_number": "KA-01-HH-1234",
+  "vehicle_type": "CAR"
+}
+Response (201 - Created):
+
+json
+Copy
+Edit
+{
+  "message": "Vehicle registered successfully.",
+  "vehicle_id": 1
+}
+
+
+
+✅ 10. Generate Parking Ticket (Vehicle Entry)
+URL: /api/tickets/generate
+
+Method: POST
+
+Request Body:
+
+json
+Copy
+Edit
+{
+  "vehicle_id": 1
+}
+Response (201 - Created):
+
+json
+Copy
+Edit
+{
+  "message": "Ticket generated successfully.",
+  "ticket_id": 101,
+  "spot_id": 10,
+  "floor_id": 1
+}
+
+
+
+
+✅ 11. Process Vehicle Exit (Close Ticket)
+URL: /api/tickets/exit
+
+Method: POST
+
+Request Body:
+
+json
+Copy
+Edit
+{
+  "ticket_id": 101
+}
+Response (200 - OK):
+
+json
+Copy
+Edit
+{
+  "message": "Vehicle exited successfully.",
+  "fare": 20.5
+}
+🔍 Summary of API Endpoints
+Type	Endpoint	Description
+Public	/reserve	Create a reservation for a spot.
+Public	/payment	Process payment for reservation.
+Public	/cancel	Cancel a reservation.
+Internal	/calculate_payment	Calculate payment for a reservation.
+Internal	/create_account	Create a new user account.
+Internal	/login	Login and generate an authentication token.
+Internal	/freespots	Check available spots in a garage.
+Internal	/allocate_spot	Allocate a spot without reservation.
+Public	/api/vehicles/register	Register a new vehicle.
+Public	/api/tickets/generate	Generate parking ticket.
+Public	/api/tickets/exit	Process vehicle exit.

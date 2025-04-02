@@ -1,0 +1,136 @@
+Low-Level Design (LLD) – Service-Level Rate Limiter
+🧱 1. Modules & Responsibilities
+Module	Responsibility
+RateLimiterService	Main logic: apply rules, evaluate rate limits
+RuleCacheService	Load + fetch rule config from Redis/Memcached
+CounterService	INCR + EXPIRE keys in Redis (per user/ip/route)
+AuthService	Decode and verify JWT, extract user_id
+RuleSyncWorker	Fetch rules from DB and populate Redis cache
+PostgreSQL DB	Stores rule config (user_id, route, limits, etc.)
+Redis (counter)	Fast access for rate counters
+QueueHandler	Pushes to async queue when request is rejected
+⚙️ 2. Core RateLimiterService (Pseudocode)
+python
+Copy
+Edit
+class RateLimiterService:
+    def __init__(self, rule_cache, redis_counter, auth_service):
+        self.rule_cache = rule_cache
+        self.redis_counter = redis_counter
+        self.auth_service = auth_service
+
+    def handle_request(self, request):
+        identity = self.auth_service.identify(request)
+        rule = self.rule_cache.get_rule(identity)
+
+        if not rule:
+            return allow()  # fallback or deny
+
+        counter_key = self._generate_key(identity)
+        count = self.redis_counter.incr_with_expiry(counter_key, rule.window)
+
+        if count > rule.limit:
+            return self.reject_or_queue(request, identity, rule)
+
+        return self.forward_request(request)
+
+    def _generate_key(self, identity):
+        bucket = get_current_minute_window()
+        return f"rate_{identity.type}:{identity.value}:{bucket}"
+📦 3. RuleCacheService (Redis-backed)
+python
+Copy
+Edit
+class RuleCacheService:
+    def get_rule(self, identity):
+        key = f"rule:{identity.type}:{identity.value}"
+        rule = redis.get(key)
+        return json.loads(rule) if rule else None
+🧮 4. CounterService (Atomic Redis Eval)
+python
+Copy
+Edit
+class CounterService:
+    LUA_SCRIPT = """
+    local current = redis.call("INCR", KEYS[1])
+    if current == 1 then
+        redis.call("EXPIRE", KEYS[1], ARGV[1])
+    end
+    return current
+    """
+
+    def incr_with_expiry(self, key, expiry_seconds):
+        return redis.eval(self.LUA_SCRIPT, 1, key, expiry_seconds)
+🔐 5. AuthService (JWT)
+python
+Copy
+Edit
+class AuthService:
+    def identify(self, request):
+        jwt = request.headers.get("Authorization")
+        payload = decode_jwt(jwt)
+        return Identity(type="user_id", value=payload["sub"])
+🔁 6. RuleSyncWorker (DB → Redis Cache)
+python
+Copy
+Edit
+def sync_rules_to_cache():
+    rules = db.fetch_all("SELECT * FROM rate_limit_rules WHERE enabled = true")
+    for rule in rules:
+        key = f"rule:{rule.key_type}:{rule.key_value}"
+        value = json.dumps({"limit": rule.limit, "window": rule.window_seconds})
+        redis.set(key, value)
+Schedule to run every 5–10 minutes, or on admin rule update.
+
+🚦 7. API Handling Flow
+plaintext
+Copy
+Edit
+Client Request →
+ → Load Balancer →
+  → RateLimiterService →
+   - Get Identity
+   - Fetch Rule
+   - Check Counter in Redis
+   - Forward or Reject
+→ App Server (if allowed)
+🧪 8. API Error Response
+json
+Copy
+Edit
+HTTP 429 Too Many Requests
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+Add headers:
+
+makefile
+Copy
+Edit
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+Retry-After: 60
+🧱 9. Redis Key Naming Convention
+Key Type	Format
+Rule Cache	rule:user_id:user_123
+Counter	rate_user:user_123:20250402_1730
+IP Count	rate_ip:192.168.0.5:20250402_1730
+Use time-bucketing (e.g. minute) to auto-expire counters cleanly.
+
+🛠 10. Retry Strategy (Client-Side)
+js
+Copy
+Edit
+if (res.status === 429) {
+  wait(res.headers['Retry-After'] || 5 seconds);
+  retry();
+}
+✅ Optional: Plan-Based Multi-Tier Support
+Update rule_limit_rules table to include:
+
+sql
+Copy
+Edit
+plan_name TEXT, -- e.g. free, pro, enterprise
+Match the rule priority based on user tier.

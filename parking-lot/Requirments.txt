@@ -1,0 +1,58 @@
+Minimum Requirements for Parking Lot Management System
+Entry & Exit System:
+
+Allow vehicles to enter and exit the parking lot.
+
+Generate tickets or records for entry and exit.
+
+Spot Management:
+
+Assign available spots based on vehicle type and size.
+
+Release spots upon vehicle exit.
+
+Basic Payment System:
+
+Support payment through at least one method (e.g., cash or UPI).
+
+Spot Tracking:
+
+Track available and occupied spots in real-time.
+
+Vehicle & Spot Types:
+
+Basic differentiation between motorcycles, cars, and trucks.
+
+Define at least two spot sizes: Small & Large.
+
+Pricing System:
+
+Basic pricing based on duration of stay.
+
+Generate simple bills (Base Fare only).
+
+
+Detialed:
+Vehicle Parking:
+
+Entry: Allow vehicles to enter the parking lot and generate a ticket/record entry.
+Spot Assignment: Assign available parking spots based on vehicle type and size.
+Spot Release: Allow vehicles to exit and release their assigned spot.
+Payment: Facilitate various payment methods (cash, credit card, UPI, mobile wallets, etc.).
+Parking Lot Management:
+
+Spot Tracking: Real-time tracking of available and occupied spots.
+Capacity Management: Enforce maximum capacity for the entire parking lot and individual floors.
+Display System: Display available spots on a each floor.
+Vehicle Types & Spot Sizes:
+
+Vehicle Types: Support for motorcycles, cars, trucks, buses, electric vehicles, etc.
+Spot Sizes: Different spot types like Small, Medium, Large, and Electric Charging Spots.
+Spot Allocation: Prioritize smaller spots for smaller vehicles to optimize space utilization.
+Dynamic Pricing & Billing Management:
+
+Dynamic Pricing: Charge based on duration of stay and peak hours pricing.
+Bill Calculation: Generate bills with breakdowns (Base Fare + Dynamic Pricing).
+
+add reservation system too
+

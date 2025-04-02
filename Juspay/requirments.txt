@@ -1,0 +1,18 @@
+hackathon part A:
+https://github.com/dev-singh-kanyal/JusPay/blob/main/Hackathon_Part_A.md
+
+asumption:
+https://github.com/dev-singh-kanyal/JusPay/blob/main/Hackathon_Que_Notes.md
+
+hackathon part b:
+optimize to the 
+lock :logmN
+unlock:logmN
+upgrade:O(number of lockednodes*logmN)
+
+m is base
+
+ logarithmic solution will require segment tree or binary lifting like techniques to solve this problem.
+
+
+ 

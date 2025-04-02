@@ -1,0 +1,126 @@
+Token Bucket Rate Limiting – Full Guide (C++ Non-Threaded Version)
+🔍 What is Token Bucket?
+A rate limiting algorithm that uses a "bucket of tokens" to control the number of requests a system will allow in a given time window.
+
+🧠 Layman Explanation
+Imagine a bucket that fills with tokens, one token per second.
+
+Each request takes 1 token from the bucket.
+
+If the bucket is empty, the request is denied.
+
+If you don’t make any requests for a while, tokens accumulate (up to a max).
+
+Allows short bursts, but limits sustained overuse.
+
+📈 Visual Diagram
+sql
+Copy
+Edit
+        +-----------------------------+
+        |       Token Generator       |
+        |  (1 token per second)       |
+        +--------------+--------------+
+                       |
+             +---------v----------+
+             |   TOKEN BUCKET     | ← Max = 3 tokens
+             +---------+----------+
+                       |
+           +-----------v-----------+
+           |     TryConsume()      |
+           |  if token exists → ✅ |
+           |  else → HTTP 429 ❌   |
+           +-----------------------+
+🧪 Real-Time Scenario
+You allow a user to send 3 API requests instantly
+
+And then 1 new request per second
+
+Example Flow:
+Time	Action	Tokens Left	Result
+0 sec	Request 1	2	✅
+0 sec	Request 2	1	✅
+0 sec	Request 3	0	✅
+0 sec	Request 4	0	❌
++1 sec	1 token added	1	
++1 sec	Request 5	0	✅
+💻 Full Code – Non-Thread-Safe Version
+cpp
+Copy
+Edit
+#include <bits/stdc++.h>
+#include <chrono>
+#include <thread>
+using namespace std;
+
+class TokenBucket {
+private:
+    double maxBucketSize;
+    double refillRatePerSecond;
+    double currentBucketSize;
+    long long lastRefillTimestamp;
+
+    // Get current time in milliseconds
+    long long getCurrentTimeMillis() {
+        return chrono::duration_cast<chrono::milliseconds>(
+            chrono::system_clock::now().time_since_epoch()
+        ).count();
+    }
+
+    // Refill tokens based on elapsed time
+    void refill() {
+        long long now = getCurrentTimeMillis();
+        long long elapsed = now - lastRefillTimestamp;
+
+        double refillAmount = (elapsed / 1000.0) * refillRatePerSecond;
+        currentBucketSize = min(maxBucketSize, currentBucketSize + refillAmount);
+        lastRefillTimestamp = now;
+    }
+
+public:
+    TokenBucket(double maxSize, double refillRate)
+        : maxBucketSize(maxSize), refillRatePerSecond(refillRate),
+          currentBucketSize(maxSize) {
+        lastRefillTimestamp = getCurrentTimeMillis();
+    }
+
+    // Consume token if available
+    bool tryConsume(double amount) {
+        refill();
+        if (currentBucketSize >= amount) {
+            currentBucketSize -= amount;
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    TokenBucket bucket(3, 1); // max 3 tokens, 1 token/sec refill
+
+    cout << "Request 1 processed: " << bucket.tryConsume(1) << endl; // ✅
+    cout << "Request 2 processed: " << bucket.tryConsume(1) << endl; // ✅
+    cout << "Request 3 processed: " << bucket.tryConsume(1) << endl; // ✅
+    cout << "Request 4 processed: " << bucket.tryConsume(1) << endl; // ❌
+
+    this_thread::sleep_for(chrono::seconds(1)); // wait for refill
+
+    cout << "Request 5 processed: " << bucket.tryConsume(1) << endl; // ✅
+
+    return 0;
+}
+✅ Sample Output
+yaml
+Copy
+Edit
+Request 1 processed: 1
+Request 2 processed: 1
+Request 3 processed: 1
+Request 4 processed: 0
+Request 5 processed: 1
+🧱 Use Cases for This Version
+Use Case	Is It Suitable?
+Local testing & learning	✅ Yes
+CLI tools with one thread	✅ Yes
+Web apps with threading	❌ No (use thread-safe)
+Distributed services	❌ Use Redis or DB-backed counters

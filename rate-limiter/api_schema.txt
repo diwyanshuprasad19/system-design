@@ -1,0 +1,94 @@
+Service-Layer Rate Limiter (Layer 7)
+🔧 What It Does
+Rate limits:
+
+per user, per IP, per token
+
+on specific routes like /api/chat, /api/login
+
+using logic like “100 requests per 15 minutes”
+
+🧱 Data Schema
+We’ll break this into 2 parts:
+
+1️⃣ Rule Configuration (DB): rate_limit_rules
+This table stores the config of rate limits.
+
+Column	Type	Description
+id	UUID	Primary key
+key_type	ENUM	user_id, ip, api_key, route
+key_value	TEXT	e.g. user_123, /api/chat
+limit	INT	Max allowed requests
+window_seconds	INT	Time window (in seconds)
+enabled	BOOLEAN	True if active
+created_at	TIMESTAMP	Audit log
+updated_at	TIMESTAMP	Audit log
+
+
+2️⃣ Rate Counters (In Redis):
+Stored as ephemeral keys:
+
+css
+Copy
+Edit
+rate_limit:{key_type}:{key_value}:{current_window}
+🧪 Example:
+
+makefile
+Copy
+Edit
+rate_limit:user_id:user_123:20250402_1710 = 55
+rate_limit:ip:192.168.1.1:20250402_1710 = 23
+These keys:
+
+Auto-expire in window_seconds
+
+Are incremented with INCR
+
+Evaluated with every request
+
+🚀 Sample FastAPI or Express Logic (Pseudocode)
+python
+Copy
+Edit
+def check_rate_limit(user_id, route):
+    key = f"rate_limit:user_id:{user_id}:{get_current_minute_window()}"
+    count = redis.incr(key)
+
+    if count == 1:
+        redis.expire(key, window_seconds)
+
+    if count > allowed_limit:
+        raise RateLimitExceeded()
+🎯 Edge Cases Handled
+Scenario	Solution
+One user spams multiple endpoints	Global user_id limit
+Route is abused by many users	Add per-route limiter
+Anonymous IP abuse	Use ip-based limit
+Want flexible plan-based limits	Add a plan key & priority rules
+🔁 API Endpoints (Optional Admin Dashboard)
+Endpoint	Description
+POST /api/rate-rules/	Create new rule (user, IP, etc)
+GET /api/rate-rules/	List all rules
+PATCH /api/rate-rules/:id/	Update rule
+DELETE /api/rate-rules/:id/	Remove or disable
+🧠 Real-World Examples
+Product	Service Layer Rate Limits
+GitHub API	5000 req/hour per token
+Slack	Per-route limits (e.g., /chat.send)
+OpenAI	Per-user token usage limits
+📦 Redis Setup Recap (Fixed Window Example)
+bash
+Copy
+Edit
+# INCR + EXPIRE in atomic step
+INCR rate_limit:user_id:user_123:20250402_1710
+EXPIRE rate_limit:user_id:user_123:20250402_1710 60
+Or use Redis Lua script for atomicity.
+
+✅ TL;DR
+Component	Role
+DB Table	Stores config (limit, key type, duration)
+Redis	Stores request counters (fast & expires)
+App Middleware	Checks Redis, allows/blocks request
+Optional Admin	Manage rules dynamically (CRUD APIs)

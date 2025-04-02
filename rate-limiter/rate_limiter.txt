@@ -1,0 +1,30 @@
+Theory:
+https://dev-shivansh95.medium.com/rate-limiter-system-design-1b2d0f153422
+Basic
+https://medium.com/@khalilsayed/cracking-the-system-design-design-an-rate-limiter-0b129829a667
+good
+
+
+
+Notes:
+https://docs.google.com/document/d/1k6XQCtAJLK0wwvr-XqjPXoqojmr-vFdpo1HW6RdFkME/edit?tab=t.0
+
+
+Basic epxalinaton on soem topic
+
+LLd and hld:
+
+
+
+Order by which to go:
+first go through notes as hld and lld There
+
+hld
+
+token Bucket
+leaky Bucket
+fixed window counter
+sliding window log
+sliding window counter
+
+api_schema

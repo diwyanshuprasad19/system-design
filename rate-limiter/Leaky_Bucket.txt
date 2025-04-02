@@ -1,0 +1,120 @@
+What is Leaky Bucket?
+A queue-like algorithm that:
+
+Accepts requests into a bucket (queue) if there’s space.
+
+Processes (leaks) at a steady rate, e.g., 1 request/second.
+
+If the bucket is full → request is denied.
+
+🧠 Layman Explanation
+Think of a funnel filled with water 💧
+
+You pour water (requests) into it
+
+It drips out at a constant rate
+
+If you pour in too much too quickly → it overflows (drops requests)
+
+🧪 Real-Time Scenario
+Time	Bucket Level	Action	Result
+0 sec	0 → 3	Request for 3 tokens	✅
+0 sec	3 → 6 ❌	Request for 3 tokens	❌
++2 sec	3 → 1 (after 2 tokens leaked)	Request for 2 tokens	✅
+📈 Diagram
+sql
+Copy
+Edit
+         +------------------+
+         |  Leaky Bucket    |  ← Capacity: 5
+         |------------------|
+         |  currentLevel: 3 |
+         +--------+---------+
+                  |
+     +------------v-----------+
+     | Leak 1 token per second|
+     +------------------------+
+💻 Full C++ Implementation (non-threaded)
+cpp
+Copy
+Edit
+#include <bits/stdc++.h>
+#include <thread>
+#include <chrono>
+using namespace std;
+
+class LeakyBucket {
+private:
+    int capacity;
+    int leakRate; // tokens leaked per second
+    int currentLevel;
+    bool stopLeak;
+
+public:
+    LeakyBucket(int cap, int rate)
+        : capacity(cap), leakRate(rate), currentLevel(0), stopLeak(false) {}
+
+    bool tryProcessRequest(int tokens) {
+        if (currentLevel + tokens <= capacity) {
+            currentLevel += tokens;
+            return true;
+        }
+        return false;
+    }
+
+    void startLeaking() {
+        thread([this]() {
+            while (!stopLeak) {
+                this_thread::sleep_for(chrono::seconds(1));
+                leakTokens();
+            }
+        }).detach(); // background thread to simulate leakage
+    }
+
+    void leakTokens() {
+        currentLevel = max(0, currentLevel - leakRate);
+    }
+
+    void stopLeaking() {
+        stopLeak = true;
+    }
+
+    int getCurrentLevel() {
+        return currentLevel;
+    }
+};
+
+int main() {
+    LeakyBucket bucket(5, 1); // capacity 5, leak 1 token/sec
+    bucket.startLeaking();
+
+    cout << "Request 1 (3 tokens): " << bucket.tryProcessRequest(3) << endl; // ✅
+    cout << "Request 2 (3 tokens): " << bucket.tryProcessRequest(3) << endl; // ❌
+
+    this_thread::sleep_for(chrono::seconds(2)); // wait for 2 tokens to leak
+
+    cout << "Request 3 (2 tokens): " << bucket.tryProcessRequest(2) << endl; // ✅
+
+    bucket.stopLeaking();
+    return 0;
+}
+✅ Output
+scss
+Copy
+Edit
+Request 1 (3 tokens): 1
+Request 2 (3 tokens): 0
+Request 3 (2 tokens): 1
+📋 Token Bucket vs Leaky Bucket
+Feature	Token Bucket	Leaky Bucket
+Allows burst	✅ Yes	❌ No, steady leak only
+Processing rate	Flexible (until empty)	Fixed (leak rate)
+Use cases	APIs with burst need	Smoother traffic enforcement
+Complexity	Simple refill logic	Needs scheduled leak thread
+🔧 Best Use Cases
+Login systems (enforce a fixed retry pace)
+
+Payments (1 transaction/sec max)
+
+Legacy services that choke under bursts
+

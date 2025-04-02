@@ -1,0 +1,128 @@
+Fixed Window Rate Limiting – Full Guide (C++ Version)
+🔍 What is Fixed Window Counter?
+The Fixed Window Algorithm keeps a counter of requests per time window (e.g., per minute).
+If the number of requests exceeds the limit within that window → ❌ future requests are blocked until the next window starts.
+
+🧠 Layman Explanation
+Imagine your API checks requests per minute like a toll gate that resets every 60 seconds.
+
+You can make up to 5 requests per minute
+
+Once the clock hits a new minute (like 12:01 → 12:02), your request count is reset to 0
+
+⚠️ Vulnerability (Edge-Bursting)
+If the limit is 5 requests/minute:
+
+User sends 5 requests at 12:00:55
+
+Then immediately sends 5 more at 12:01:01
+
+That's 10 requests in ~6 seconds 💥
+
+This happens because the counter resets abruptly at the start of each new window — this is known as a burst-at-boundary problem.
+
+📈 Diagram (Timeline)
+sql
+Copy
+Edit
+Time       : 12:00:00   12:00:30   12:01:00
+Window     : [Window A]          [Window B]
+Requests   :     5                +5 more
+Effective: 10 requests in 6 seconds → ⚠️
+
+🧪 Real-Time Usage Example
+Window: 5 seconds
+
+Limit: 3 requests per window
+
+Time	Action	Counter	Result
+0s	Request 1	1	✅
+0s	Request 2	2	✅
+0s	Request 3	3	✅
+0s	Request 4	3	❌
++5s	Request 5 (new window)	1	✅
+
+
+
+
+💻 Full Code in C++ (Simplified, Non-Threaded)
+
+#include <bits/stdc++.h>
+#include <chrono>
+#include <thread>
+using namespace std;
+
+class FixedWindowRateLimiter {
+private:
+    int requestLimit;
+    int windowSizeSeconds;
+    unordered_map<long long, int> requestCounts;
+
+    long long getCurrentWindowKey() {
+        auto now = chrono::system_clock::now().time_since_epoch();
+        long long millis = chrono::duration_cast<chrono::milliseconds>(now).count();
+        return millis / (windowSizeSeconds * 1000);
+    }
+
+public:
+    FixedWindowRateLimiter(int limit, int windowSizeSec)
+        : requestLimit(limit), windowSizeSeconds(windowSizeSec) {}
+
+    bool tryProcessRequest() {
+        long long windowKey = getCurrentWindowKey();
+        if (requestCounts[windowKey] < requestLimit) {
+            requestCounts[windowKey]++;
+            return true;
+        }
+        return false;
+    }
+};
+
+int main() {
+    FixedWindowRateLimiter rateLimiter(3, 5); // 3 requests per 5 seconds
+
+    cout << "Request 1: " << rateLimiter.tryProcessRequest() << endl; // ✅
+    cout << "Request 2: " << rateLimiter.tryProcessRequest() << endl; // ✅
+    cout << "Request 3: " << rateLimiter.tryProcessRequest() << endl; // ✅
+    cout << "Request 4: " << rateLimiter.tryProcessRequest() << endl; // ❌
+
+    this_thread::sleep_for(chrono::seconds(5)); // Wait for window reset
+
+    cout << "Request 5: " << rateLimiter.tryProcessRequest() << endl; // ✅
+}
+
+
+
+✅ Output
+yaml
+Copy
+Edit
+Request 1: 1
+Request 2: 1
+Request 3: 1
+Request 4: 0
+Request 5: 1
+📋 Summary & Comparison
+Feature	Fixed Window Counter
+Easy to implement	✅ Yes
+Allows bursts	⚠️ Yes (at window edges)
+Suitable for small apps	✅ Yes
+Problem with fairness	❌ Sudden reset can be gamed
+Alternative recommendation	✔️ Use Sliding Window or Token Bucket
+🧠 When to Use
+✅ Great for:
+
+Simple throttling
+
+Internal APIs
+
+Quick prototypes
+
+⚠️ Avoid for:
+
+Critical abuse prevention
+
+Billing APIs
+
+Public APIs (where edge bursting can be exploited)
+

@@ -1,0 +1,170 @@
+1. ParkingLots Table (Main Table)
+Stores basic information about each parking lot.
+
+Column Name	Data Type	Description
+lot_id	INT (PK)	Unique identifier for the parking lot.
+name	VARCHAR(100)	Name of the parking lot.
+location	VARCHAR(255)	Physical address of the parking lot.
+total_capacity	INT	Maximum capacity of the lot.
+current_capacity	INT	Current occupied spots.
+created_at	DATETIME	Timestamp of creation.
+updated_at	DATETIME	Timestamp of last update.
+
+
+
+2. Floors Table (One-to-Many Relationship with ParkingLots)
+Each parking lot can have multiple floors.
+
+Column Name	Data Type	Description
+floor_id	INT (PK)	Unique identifier for the floor.
+lot_id	INT (FK)	Foreign key referencing ParkingLots.
+floor_number	INT	Floor number within the parking lot.
+total_spots	INT	Total spots on this floor.
+available_spots	INT	Available spots on this floor.
+created_at	DATETIME	Timestamp of creation.
+updated_at	DATETIME	Timestamp of last update.
+Relationship:
+
+One Parking Lot (lot_id) can have many Floors (floor_id).
+
+
+3. Spots Table (One-to-Many Relationship with Floors)
+Each floor can have multiple spots.
+
+Column Name	Data Type	Description
+spot_id	INT (PK)	Unique identifier for each spot.
+floor_id	INT (FK)	Foreign key referencing Floors.
+spot_number	INT	Spot number within the floor.
+size	VARCHAR(20)	Spot size (SMALL, MEDIUM, LARGE, ELECTRIC).
+is_occupied	BOOLEAN	Indicates whether the spot is occupied.
+is_reserved	BOOLEAN	Indicates if the spot is reserved.
+created_at	DATETIME	Timestamp of creation.
+updated_at	DATETIME	Timestamp of last update.
+Relationship:
+
+One Floor (floor_id) can have many Spots (spot_id).
+
+4. Vehicles Table (Independent Table)
+Stores details about each vehicle using the parking lot.
+
+Column Name	Data Type	Description
+vehicle_id	INT (PK)	Unique identifier for each vehicle.
+vehicle_number	VARCHAR(20)	Registration number of the vehicle.
+vehicle_type	VARCHAR(20)	Type of vehicle (CAR, MOTORCYCLE, etc.).
+created_at	DATETIME	Timestamp of vehicle entry.
+updated_at	DATETIME	Timestamp of last update.
+Relationship:
+
+No direct relationship here.
+
+Vehicles will be referenced in the Tickets Table.
+
+
+
+5. Tickets Table (Many-to-One Relationship with Vehicles, Spots, Floors)
+Tracks active parking sessions.
+
+Column Name	Data Type	Description
+ticket_id	INT (PK)	Unique ticket ID for each entry.
+vehicle_id	INT (FK)	Foreign key referencing Vehicles.
+spot_id	INT (FK)	Foreign key referencing Spots.
+floor_id	INT (FK)	Foreign key referencing Floors.
+entry_time	DATETIME	Timestamp of vehicle entry.
+exit_time	DATETIME	Timestamp of vehicle exit.
+fare	DECIMAL(10,2)	Total fare for the parking session.
+status	VARCHAR(20)	Status of ticket (ACTIVE, CLOSED).
+Relationships:
+
+One Vehicle (vehicle_id) can have many Tickets (ticket_id). (One-to-Many)
+
+One Spot (spot_id) can have many Tickets (ticket_id). (One-to-Many)
+
+One Floor (floor_id) can have many Tickets (ticket_id). (One-to-Many)
+
+
+
+6. Transactions Table (One-to-One Relationship with Tickets)
+Logs all transactions made by the users.
+
+Column Name	Data Type	Description
+transaction_id	INT (PK)	Unique transaction ID.
+ticket_id	INT (FK)	Foreign key referencing Tickets.
+payment_method	VARCHAR(20)	Payment type (CASH, CARD, UPI, etc.).
+amount	DECIMAL(10,2)	Amount paid for the transaction.
+transaction_time	DATETIME	Timestamp of the transaction.
+Relationship:
+
+One Ticket (ticket_id) can have one Transaction (transaction_id). (One-to-One)
+
+7. Logs Table (Independent Table for Fault Tolerance)
+Tracks every operation for debugging and monitoring purposes.
+
+Column Name	Data Type	Description
+log_id	INT (PK)	Unique identifier for the log.
+operation	VARCHAR(255)	Operation name (Spot Assignment, Payment, etc.).
+message	TEXT	Description of the operation.
+timestamp	DATETIME	Time when the operation occurred.
+
+
+
+
+
+8. Reservations Table (New Table for Reservation System)
+Tracks reservations made by users.
+
+Column Name	Data Type	Description
+reservation_id	INT (PK)	Unique identifier for each reservation.
+vehicle_id	INT (FK)	Foreign key referencing Vehicles.
+spot_id	INT (FK)	Foreign key referencing Spots.
+floor_id	INT (FK)	Foreign key referencing Floors.
+reservation_time	DATETIME	Time when the reservation was made.
+status	VARCHAR(20)	Status of reservation (ACTIVE, CANCELED, COMPLETED).
+created_at	DATETIME	Timestamp of creation.
+updated_at	DATETIME	Timestamp of last update.
+Relationships:
+
+One Vehicle (vehicle_id) can have many Reservations (reservation_id). (One-to-Many)
+
+One Spot (spot_id) can have many Reservations (reservation_id). (One-to-Many)
+
+One Floor (floor_id) can have many Reservations (reservation_id). (One-to-Many)
+
+🔍 Relationships Summary (Foreign Keys)
+Floors.lot_id → ParkingLots.lot_id (One-to-Many)
+
+Spots.floor_id → Floors.floor_id (One-to-Many)
+
+Tickets.vehicle_id → Vehicles.vehicle_id (Many-to-One)
+
+Tickets.spot_id → Spots.spot_id (Many-to-One)
+
+Tickets.floor_id → Floors.floor_id (Many-to-One)
+
+Transactions.ticket_id → Tickets.ticket_id (One-to-One)
+
+Reservations.vehicle_id → Vehicles.vehicle_id (Many-to-One)
+
+Reservations.spot_id → Spots.spot_id (Many-to-One)
+
+Reservations.floor_id → Floors.floor_id (Many-to-One)
+
+
+
+Good question! Let's break down how One Vehicle can have many Reservations.
+
+🔍 How One Vehicle Can Have Many Reservations (One-to-Many Relationship)
+In the database schema, the relationship is established by having a foreign key vehicle_id in the Reservations table, which references the primary key vehicle_id in the Vehicles table.
+
+Why it's One-to-Many:
+A single vehicle can make multiple reservations over time.
+
+Example: A vehicle may reserve a spot for:
+
+Morning parking (Reservation ID: 1)
+
+Evening parking (Reservation ID: 2)
+
+Special events (Reservation ID: 3)
+
+All these reservations will be linked to the same vehicle_id.
+

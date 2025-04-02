@@ -1,0 +1,220 @@
+Detialed:
+Vehicle Parking:
+
+Entry: Allow vehicles to enter the parking lot and generate a ticket/record entry.
+Spot Assignment: Assign available parking spots based on vehicle type and size.
+Spot Release: Allow vehicles to exit and release their assigned spot.
+Payment: Facilitate various payment methods (cash, credit card, UPI, mobile wallets, etc.).
+Parking Lot Management:
+
+Spot Tracking: Real-time tracking of available and occupied spots.
+Capacity Management: Enforce maximum capacity for the entire parking lot and individual floors.
+Display System: Display available spots on a each floor.
+Vehicle Types & Spot Sizes:
+
+Vehicle Types: Support for motorcycles, cars, trucks, buses, electric vehicles, etc.
+Spot Sizes: Different spot types like Small, Medium, Large, and Electric Charging Spots.
+Spot Allocation: Prioritize smaller spots for smaller vehicles to optimize space utilization.
+Dynamic Pricing & Billing Management:
+
+Dynamic Pricing: Charge based on duration of stay and peak hours pricing.
+Bill Calculation: Generate bills with breakdowns (Base Fare + Dynamic Pricing).
+
+add reservation system too
+
+
+Code:
+
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <ctime>
+#include <memory>
+#include <map>
+
+using namespace std;
+
+// ENUM for Vehicle Type
+enum VehicleType { MOTORCYCLE, CAR, TRUCK, BUS, ELECTRIC };
+
+// ENUM for Spot Size
+enum SpotSize { SMALL, MEDIUM, LARGE, ELECTRIC_CHARGING };
+
+// Ticket Class - Responsible for managing parking ticket details
+class Ticket {
+public:
+    int ticketId;
+    string vehicleNumber;
+    int spotId;
+    int floorNumber;
+    time_t entryTime;
+    time_t exitTime;
+    double fare;
+
+    Ticket(int id, const string& num, int sId, int floorNum) 
+        : ticketId(id), vehicleNumber(num), spotId(sId), floorNumber(floorNum), 
+          entryTime(time(nullptr)), exitTime(0), fare(0.0) {}
+};
+
+// Vehicle Class
+class Vehicle {
+public:
+    VehicleType type;
+    string vehicleNumber;
+
+    Vehicle(VehicleType t, const string& num) : type(t), vehicleNumber(num) {}
+};
+
+// Spot Class
+class Spot {
+public:
+    int spotId;
+    int floorNumber;
+    SpotSize size;
+    bool isOccupied;
+    bool isReserved;
+
+    Spot(int id, int floorNum, SpotSize s) 
+        : spotId(id), floorNumber(floorNum), size(s), isOccupied(false), isReserved(false) {}
+};
+
+// Pricing Interface
+class PricingStrategy {
+public:
+    virtual double calculateFare(time_t entryTime, time_t exitTime) = 0;
+};
+
+// Dynamic Pricing Strategy
+class DynamicPricing : public PricingStrategy {
+public:
+    double calculateFare(time_t entryTime, time_t exitTime) override {
+        double baseFare = 10.0;
+        double duration = difftime(exitTime, entryTime) / 60;  // Minutes
+        double dynamicCharge = (duration > 1) ? (duration - 1) * 2 : 0.0;  
+        return baseFare + dynamicCharge;
+    }
+};
+
+// Reservation Class
+class Reservation {
+public:
+    int reservationId;
+    int spotId;
+    int floorNumber;
+    string vehicleNumber;
+    time_t reservationTime;
+
+    Reservation(int id, int sId, int floorNum, const string& num) 
+        : reservationId(id), spotId(sId), floorNumber(floorNum), vehicleNumber(num), 
+          reservationTime(time(nullptr)) {}
+};
+
+class ParkingLot {
+    int currentTicketId = 1;
+    int currentReservationId = 1;
+    unordered_map<int, Ticket> activeTickets;
+    unordered_map<int, Reservation> reservations;
+    vector<Spot> spots;
+    unique_ptr<PricingStrategy> pricingStrategy;
+    int maxCapacity;
+
+public:
+    ParkingLot(int maxCap) : maxCapacity(maxCap), pricingStrategy(make_unique<DynamicPricing>()) {
+        for (int i = 1; i <= 20; ++i) spots.push_back(Spot(i, 1, SMALL));
+        for (int i = 21; i <= 40; ++i) spots.push_back(Spot(i, 2, MEDIUM));
+        for (int i = 41; i <= 60; ++i) spots.push_back(Spot(i, 3, LARGE));
+    }
+
+    int generateTicket(Vehicle& vehicle) {
+        int spotId, floorNum;
+        if (!assignSpot(vehicle.type, spotId, floorNum)) return -1;
+
+        Ticket ticket(currentTicketId++, vehicle.vehicleNumber, spotId, floorNum);
+        activeTickets[ticket.ticketId] = ticket;
+
+        return ticket.ticketId;
+    }
+
+    bool assignSpot(VehicleType type, int& spotId, int& floorNum, bool forReservation = false) {
+        SpotSize requiredSize = (type == MOTORCYCLE) ? SMALL : (type == CAR) ? MEDIUM : LARGE;
+
+        for (auto& spot : spots) {
+            if (!spot.isOccupied && spot.size == requiredSize && (!spot.isReserved || forReservation)) {
+                spot.isOccupied = true;
+                spotId = spot.spotId;
+                floorNum = spot.floorNumber;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    int makeReservation(VehicleType type, const string& vehicleNumber) {
+        int spotId, floorNum;
+        if (!assignSpot(type, spotId, floorNum, true)) return -1;
+
+        for (auto& spot : spots) {
+            if (spot.spotId == spotId) {
+                spot.isReserved = true;
+                break;
+            }
+        }
+
+        Reservation reservation(currentReservationId++, spotId, floorNum, vehicleNumber);
+        reservations[reservation.reservationId] = reservation;
+
+        return reservation.reservationId;
+    }
+};
+
+// Main Function
+int main() {
+    ParkingLot parkingLot(60);
+
+    Vehicle car1(CAR, "KA-01-HH-1234");
+    Vehicle bike1(MOTORCYCLE, "KA-05-JK-5678");
+
+    int ticket1 = parkingLot.generateTicket(car1);
+    int ticket2 = parkingLot.generateTicket(bike1);
+
+    int reservation1 = parkingLot.makeReservation(CAR, "KA-01-HH-9999");
+
+    if (ticket1 != -1) cout << "✅ Ticket Generated for Car: " << ticket1 << endl;
+    if (ticket2 != -1) cout << "✅ Ticket Generated for Bike: " << ticket2 << endl;
+    if (reservation1 != -1) cout << "✅ Reservation Created: " << reservation1 << endl;
+
+    return 0;
+}
+📌 Sample Input/Output
+📥 Input:
+Create a Car with vehicle number "KA-01-HH-1234".
+
+Create a Bike with vehicle number "KA-05-JK-5678".
+
+Make a reservation for a Car with vehicle number "KA-01-HH-9999".
+
+📤 Output:
+yaml
+Copy
+Edit
+✅ Ticket Generated for Car: 1
+✅ Ticket Generated for Bike: 2
+✅ Reservation Created: 1
+📊 Time Complexity Analysis
+Operation	Time Complexity
+Generating Ticket	O(n)
+Assigning Spot	O(n)
+Making Reservation	O(n)
+💾 Space Complexity Analysis
+Structure	Space Complexity
+spots Vector	O(n)
+activeTickets Map	O(m)
+reservations Map	O(r)
+Where:
+
+n = Total number of spots in the parking lot.
+
+m = Number of active tickets at a given time.
+
+r = Number of reservations made.
+

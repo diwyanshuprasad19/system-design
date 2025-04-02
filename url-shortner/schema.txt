@@ -1,0 +1,388 @@
+Detailed Database Schema (Tables).
+
+Relationships and how they work.
+
+Sample Data Insertion (Real-Time Example).
+
+Resulting Tables with Example Outputs.
+
+📌 Database Schema (Detailed)
+✅ Users Table
+Column	Type	Description
+UserID	VARCHAR(36)	Unique user identifier (UUID) (Primary Key)
+Name	VARCHAR(100)	Name of the user
+Email	VARCHAR(100)	User's email (Unique)
+CreationDate	DATETIME	Date when the user was registered
+
+
+✅ URLMappings Table
+Column	Type	Description
+OriginalUrl	TEXT	The long URL that needs to be shortened (Primary Key)
+ShortUrl	VARCHAR(10)	The unique shortened URL (Indexed)
+CreationDate	DATETIME	Date when the URL was shortened
+
+
+✅ UserShortLinks Table
+Column	Type	Description
+ID	INT	Auto-Incremented Primary Key
+UserID	VARCHAR(36)	Reference to Users.UserID (Foreign Key)
+ShortUrl	VARCHAR(10)	Reference to URLMappings.ShortUrl (Foreign Key)
+CreationDate	DATETIME	Date when this short URL was created by the user
+
+
+🔗 Relationships:
+Users → UserShortLinks: One-to-Many (One user can have multiple short links).
+
+URLMappings → UserShortLinks: One-to-Many (One ShortUrl can be reused by multiple users).
+
+
+
+Resulting Tables (After Insertion)
+
+Users Table
+UserID	Name	Email	CreationDate
+123e4567-e89b-12d3-a456-426614174000	Alice	alice@example.com	2025-03-23 10:00:00
+223e4567-e89b-12d3-a456-426614174001	Bob	bob@example.com	2025-03-23 10:05:00
+
+
+URLMappings Table
+OriginalUrl	ShortUrl	CreationDate
+https://example.com/long-url-1	abc123	2025-03-23 10:00:00
+https://example.com/long-url-2	xyz789	2025-03-23 10:09:00
+
+
+UserShortLinks Table
+ID	UserID	ShortUrl	CreationDate
+1	123e4567-e89b-12d3-a456-426614174000	abc123	2025-03-23 10:00:00
+2	223e4567-e89b-12d3-a456-426614174001	abc123	2025-03-23 10:07:00
+3	223e4567-e89b-12d3-a456-426614174001	xyz789	2025-03-23 10:09:00
+
+
+🔑 Explanation of Data Flow:
+Alice creates a new Short URL (abc123).
+
+Bob uses the same URL and gets the same abc123 (No duplication created in URLMappings).
+
+Bob creates a new URL (xyz789) which is stored as a new entry in URLMappings.
+
+
+
+
+
+
+
+
+
+
+In NoSQL databases, the structure and relationships are handled differently. Let's break down how the same system would work in a NoSQL (e.g., MongoDB) environment.
+
+📌 NoSQL Database Schema (MongoDB)
+Since MongoDB is document-oriented, we use Collections instead of Tables, and each record is a JSON-like document.
+
+✅ Users Collection
+json
+Copy
+Edit
+{
+  "_id": "123e4567-e89b-12d3-a456-426614174000",
+  "Name": "Alice",
+  "Email": "alice@example.com",
+  "CreationDate": "2025-03-23T10:00:00Z"
+}
+json
+Copy
+Edit
+{
+  "_id": "223e4567-e89b-12d3-a456-426614174001",
+  "Name": "Bob",
+  "Email": "bob@example.com",
+  "CreationDate": "2025-03-23T10:05:00Z"
+}
+✅ URLMappings Collection
+json
+Copy
+Edit
+{
+  "_id": "abc123",
+  "OriginalUrl": "https://example.com/long-url-1",
+  "CreationDate": "2025-03-23T10:00:00Z",
+  "Users": [
+    {
+      "UserID": "123e4567-e89b-12d3-a456-426614174000",
+      "CreationDate": "2025-03-23T10:00:00Z"
+    },
+    {
+      "UserID": "223e4567-e89b-12d3-a456-426614174001",
+      "CreationDate": "2025-03-23T10:07:00Z"
+    }
+  ]
+}
+json
+Copy
+Edit
+{
+  "_id": "xyz789",   //shorten url alias
+  "OriginalUrl": "https://example.com/long-url-2",
+  "CreationDate": "2025-03-23T10:09:00Z",
+  "Users": [
+    {
+      "UserID": "223e4567-e89b-12d3-a456-426614174001",
+      "CreationDate": "2025-03-23T10:09:00Z"
+    }
+  ]
+}
+🔗 Relationships in NoSQL (How They Work)
+Users Collection stores individual user information.
+
+URLMappings Collection stores each unique shortened URL as a document with an embedded array of Users who created or used the URL.
+
+The relationship is established by embedding user references inside the URLMappings documents rather than creating separate join tables.
+
+📌 Example Data Insertion (Real-Time Example)
+Inserting a new user (Alice):
+
+python
+Copy
+Edit
+db.Users.insert_one({
+    "_id": "123e4567-e89b-12d3-a456-426614174000",
+    "Name": "Alice",
+    "Email": "alice@example.com",
+    "CreationDate": "2025-03-23T10:00:00Z"
+})
+Inserting a new URL:
+
+python
+Copy
+Edit
+db.URLMappings.insert_one({
+    "_id": "abc123",
+    "OriginalUrl": "https://example.com/long-url-1",
+    "CreationDate": "2025-03-23T10:00:00Z",
+    "Users": [
+        {
+            "UserID": "123e4567-e89b-12d3-a456-426614174000",
+            "CreationDate": "2025-03-23T10:00:00Z"
+        }
+    ]
+})
+Adding another user (Bob) using the same URL (abc123):
+
+python
+Copy
+Edit
+db.URLMappings.update_one(
+    { "_id": "abc123" },
+    { "$push": { "Users": { 
+          "UserID": "223e4567-e89b-12d3-a456-426614174001", 
+          "CreationDate": "2025-03-23T10:07:00Z" 
+        } 
+    } 
+})
+📌 Resulting Collections (After Insertion)
+Users Collection
+_id	Name	Email	CreationDate
+123e4567-e89b-12d3-a456-426614174000	Alice	alice@example.com	2025-03-23T10:00:00Z
+223e4567-e89b-12d3-a456-426614174001	Bob	bob@example.com	2025-03-23T10:05:00Z
+URLMappings Collection
+_id	OriginalUrl	CreationDate	Users
+abc123	https://example.com/long-url-1	2025-03-23T10:00:00Z	[{"UserID": "123e4567-e89b-12d3-a456-426614174000", "CreationDate": "2025-03-23T10:00:00Z"}, {"UserID": "223e4567-e89b-12d3-a456-426614174001", "CreationDate": "2025-03-23T10:07:00Z"}]
+xyz789	https://example.com/long-url-2	2025-03-23T10:09:00Z	[{"UserID": "223e4567-e89b-12d3-a456-426614174001", "CreationDate": "2025-03-23T10:09:00Z"}]
+🔑 Why This Approach Works Well with NoSQL
+Scalability: Data is grouped and retrieved in a single query (URLs and users together).
+
+Flexibility: No predefined schema; easy to modify the structure later.
+
+High Performance: Embedding related data is faster than performing joins.
+
+Data Integrity: User history for a URL is preserved within the same document.
+
+
+
+
+
+
+
+now for custom urls how to proceed:
+
+SQL:
+
+
+ Users Table
+Column	Type	Description
+UserID	VARCHAR(36)	Unique user identifier (UUID) - Primary Key
+Name	VARCHAR(100)	Name of the user
+Email	VARCHAR(100)	User's email (Unique)
+CreationDate	DATETIME	Date when the user was registered
+
+
+📌 URLMappings Table
+Column	Type	Description
+ID	INT	Auto-Incremented Primary Key
+OriginalUrl	TEXT	The long URL that needs to be shortened (Indexed)
+ShortUrl	VARCHAR(10)	The unique shortened URL (Nullable, Indexed, Unique)
+CreationDate	DATETIME	Date when the URL was shortened
+
+
+📌 CustomUrls Table (To support multiple CustomUrls for the same OriginalUrl)
+Column	Type	Description
+ID	INT	Auto-Incremented Primary Key
+URLMappingID	INT	Reference to URLMappings.ID (Foreign Key)
+CustomUrl	VARCHAR(16)	The user-defined custom URL (Indexed, Unique)
+UserID	VARCHAR(36)	Reference to Users.UserID (Foreign Key)
+CreationDate	DATETIME	Date when the Custom URL was created
+
+
+📌 UserShortLinks Table (Tracks users creating or accessing URLs)
+Column	Type	Description
+ID	INT	Auto-Incremented Primary Key
+UserID	VARCHAR(36)	Reference to Users.UserID (Foreign Key)
+URLMappingID	INT	Reference to URLMappings.ID (Foreign Key)
+CustomUrlID	INT (NULL)	Reference to CustomUrls.ID (Foreign Key, Nullable)
+CreationDate	DATETIME	Date when this URL was created by the user
+
+🔗 Relationships & How They Work
+Table	Related Table	Relationship Type	Description
+Users	UserShortLinks	One-to-Many	One user can have multiple short or custom URLs.
+URLMappings	UserShortLinks	One-to-Many	One URL entry can be referenced by multiple users.
+URLMappings	CustomUrls	One-to-Many	One URL can have multiple custom URLs by different users.
+Users	CustomUrls	One-to-Many	Tracks which user created a particular custom URL.
+
+
+🔍 Example Data
+
+
+Users Table
+UserID	Name	Email	CreationDate
+123e4567-e89b-12d3-a456-426614174000	Alice	alice@example.com	2025-03-23 10:00:00
+223e4567-e89b-12d3-a456-426614174001	Bob	bob@example.com	2025-03-23 10:05:00
+
+
+
+URLMappings Table
+ID	OriginalUrl	ShortUrl	CreationDate
+1	https://www.example.com/very/long/url	abc123	2025-03-23 10:00:00
+
+
+CustomUrls Table
+ID	URLMappingID	CustomUrl	UserID	CreationDate
+1	1	mycustomurl1	123e4567-e89b-12d3-a456-426614174000	2025-03-23 10:00:00
+2	1	mycustomurl2	223e4567-e89b-12d3-a456-426614174001	2025-03-23 10:10:00
+
+
+UserShortLinks Table
+ID	UserID	URLMappingID	CustomUrlID	CreationDate
+1	123e4567-e89b-12d3-a456-426614174000	1	1	2025-03-23 10:00:00
+2	223e4567-e89b-12d3-a456-426614174001	1	2	2025-03-23 10:10:00
+3	223e4567-e89b-12d3-a456-426614174001	1	NULL	2025-03-23 10:15:00
+
+
+
+
+
+Nosql cusotm urls:
+
+
+Example Documents (MongoDB)
+✅ Users Collection
+json
+Copy
+Edit
+{
+    "_id": "123e4567-e89b-12d3-a456-426614174000",
+    "Name": "Alice",
+    "Email": "alice@example.com",
+    "CreationDate": "2025-03-23T10:00:00Z"
+}
+json
+Copy
+Edit
+{
+    "_id": "223e4567-e89b-12d3-a456-426614174001",
+    "Name": "Bob",
+    "Email": "bob@example.com",
+    "CreationDate": "2025-03-23T10:05:00Z"
+}
+✅ URLMappings Collection (Main Document for URLs)
+json
+Copy
+Edit
+{
+    "_id": "abc123",
+    "OriginalUrl": "https://www.example.com/very/long/url",
+    "ShortUrl": "abc123",
+    "CreationDate": "2025-03-23T10:00:00Z",
+    "CustomUrls": [
+        {
+            "CustomUrl": "mycustomurl1",
+            "UserID": "123e4567-e89b-12d3-a456-426614174000",
+            "CreationDate": "2025-03-23T10:00:00Z"
+        },
+        {
+            "CustomUrl": "mycustomurl2",
+            "UserID": "223e4567-e89b-12d3-a456-426614174001",
+            "CreationDate": "2025-03-23T10:10:00Z"
+        }
+    ]
+}
+✅ UserShortLinks Collection (Tracking User Actions)
+json
+Copy
+Edit
+{
+    "_id": "789e4567-e89b-12d3-a456-426614174999",
+    "UserID": "123e4567-e89b-12d3-a456-426614174000",
+    "URLMappingID": "abc123",
+    "CustomUrl": "mycustomurl1",
+    "CreationDate": "2025-03-23T10:00:00Z"
+}
+json
+Copy
+Edit
+{
+    "_id": "890e4567-e89b-12d3-a456-426614174888",
+    "UserID": "223e4567-e89b-12d3-a456-426614174001",
+    "URLMappingID": "abc123",
+    "CustomUrl": "mycustomurl2",
+    "CreationDate": "2025-03-23T10:10:00Z"
+}
+json
+Copy
+Edit
+{
+    "_id": "901e4567-e89b-12d3-a456-426614174777",
+    "UserID": "223e4567-e89b-12d3-a456-426614174001",
+    "URLMappingID": "abc123",
+    "CustomUrl": null,
+    "CreationDate": "2025-03-23T10:15:00Z"
+}
+🔑 How This Works
+Users Collection: Stores user information (similar to SQL schema).
+
+URLMappings Collection:
+
+Stores OriginalUrl, ShortUrl, and embedded CustomUrls.
+
+CustomUrls is an array that can have multiple entries by different users for the same OriginalUrl.
+
+UserShortLinks Collection:
+
+Logs the actions of users whenever they create or access a URL.
+
+Tracks if the user created a ShortUrl or a CustomUrl.
+
+🔍 Key Benefits
+NoSQL Flexibility:
+
+Allows multiple users to create their own CustomUrls for the same OriginalUrl without duplication.
+
+Tracks user-specific actions separately in the UserShortLinks collection.
+
+Scalability:
+
+Embedded arrays allow fast lookups of CustomUrls related to a particular OriginalUrl.
+
+Separation of Concerns:
+
+The UserShortLinks collection makes it easy to track user interactions with URLs.
+

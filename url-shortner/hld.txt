@@ -1,0 +1,29 @@
+              +---------------------+
+              |     Client App       |
+              +---------------------+
+                     |  (HTTP Requests)
+                     v
+              +---------------------+
+              |     Load Balancer    |
+              +---------------------+
+                     |  (Distributes Requests)
+                     v
+      +-----------------------------------+
+      |        Application Servers        |
+      | (C++ Backend Service - Stateless) |
+      +-----------------------------------+    here for key management system 
+                                                we can have another sharded database like redis
+         |               |                |
+         v               v                v
+ +-----------------+ +----------------+ +------------------+
+ |   In-Memory     | |     Database    | |  Background      |
+ |      Cache      | |  (Active URLs)  | |  Cleaner Process  |
+ |  (Redis/Memcached)| (DynamoDB/SQL)  | |   (Threaded)      |
+ +-----------------+ +----------------+ +------------------+
+         |                   |                |
+         |                   |                |
+         v                   v                v
+    +------------------+ +------------------+ +------------------+
+    | Expired URL      | | Analytics &      | | Logging / Backup  |
+    | Archival (S3)    | | Metrics (Redshift)| | (S3 / Cold Storage)|
+    +------------------+ +------------------+ +------------------+

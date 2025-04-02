@@ -1,1 +1,22 @@
-https://medium.com/@sandeep4.verma/system-design-scalable-url-shortener-service-like-tinyurl-106f30f23a82
+Theory:
+Basic Requirments: https://www.geeksforgeeks.org/system-design-url-shortening-service/
+All possilb scenarion:https://medium.com/@sandeep4.verma/system-design-scalable-url-shortener-service-like-tinyurl-106f30f23a82
+
+
+
+Notes:
+https://docs.google.com/document/d/1v7AIqVNVgwx6o8e0wxJvBQtfobn_M6_TLH6kznE-Hzs/edit?tab=t.0
+
+Basic epxalinaton on soem topic
+
+LLd and hld:
+https://docs.google.com/document/d/1aaiDpaVoTVGXrjZwTGXagCY4AeXRhAMaTMLsN0pxNY8/edit?tab=t.0
+
+
+Order by which to go:
+requirments.txt 
+traffic storage and memeory(cache) 
+hld and LLd
+database schema
+api
+encoding

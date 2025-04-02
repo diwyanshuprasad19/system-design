@@ -1,0 +1,447 @@
+Notes:
+https://docs.google.com/document/d/168f83x7UkQJeAXVtV44UymRnmb8TJrwAoxnVd2l0U-k/edit?tab=t.0
+
+
+
+1.dynamic prices:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// Spot Class to store information about spots
+class Spot {
+public:
+    int id;
+    double basePrice;  // Base price of the spot
+
+    Spot(int id, double basePrice) : id(id), basePrice(basePrice) {}
+
+    // Calculate dynamic price based on time
+    double getDynamicPrice(int hour) const {
+        if (hour >= 8 && hour <= 18) {  // Peak Hours (8 AM - 6 PM)
+            return basePrice * 2.0;     // Double the price
+        } 
+        else {  // Non-Peak Hours (6 PM - 8 AM)
+            return basePrice * 0.5;     // Half the price
+        }
+    }
+
+    bool operator<(const Spot& other) const {
+        return basePrice > other.basePrice;  // For Priority Queue comparison
+    }
+};
+
+// Dynamic Pricing System using Priority Queue
+class DynamicPricing {
+    priority_queue<Spot> spotQueue;
+    unordered_map<int, double> spotMap;  // Stores spot ID and base prices
+
+public:
+    void addSpot(int id, double basePrice) {
+        spotMap[id] = basePrice;
+        spotQueue.push(Spot(id, basePrice));
+    }
+
+    Spot getCheapestSpot() {
+        if (spotQueue.empty()) {
+            throw runtime_error("No available spots.");
+        }
+
+        Spot cheapest = spotQueue.top();
+        spotQueue.pop();
+
+        if (spotMap.find(cheapest.id) != spotMap.end()) {
+            return cheapest;
+        }
+        throw runtime_error("No valid spot found.");
+    }
+
+    // Function to calculate the price of a spot based on the current time
+    double calculatePrice(int spotID, int currentHour) {
+        if (spotMap.find(spotID) == spotMap.end()) {
+            throw runtime_error("Spot does not exist.");
+        }
+
+        Spot spot(spotID, spotMap[spotID]);
+        return spot.getDynamicPrice(currentHour);
+    }
+};
+
+int main() {
+    DynamicPricing pricingSystem;
+
+    // Adding spots with their base prices
+    pricingSystem.addSpot(1, 5.0);  // Base price = 5.0
+    pricingSystem.addSpot(2, 4.0);  // Base price = 4.0
+    pricingSystem.addSpot(3, 6.0);  // Base price = 6.0
+
+    // Simulating real-time parking attempts at different times
+    try {
+        Spot spot = pricingSystem.getCheapestSpot();
+        int currentHour = 9;  // User tries to park at 9 AM (Peak Hour)
+        double finalPrice = pricingSystem.calculatePrice(spot.id, currentHour);
+        cout << "Allocated Spot ID: " << spot.id << ", Price: $" << finalPrice << " (At 9 AM)" << endl;
+
+        spot = pricingSystem.getCheapestSpot();
+        currentHour = 19;  // User tries to park at 7 PM (Non-Peak Hour)
+        finalPrice = pricingSystem.calculatePrice(spot.id, currentHour);
+        cout << "Allocated Spot ID: " << spot.id << ", Price: $" << finalPrice << " (At 7 PM)" << endl;
+
+        spot = pricingSystem.getCheapestSpot();
+        currentHour = 15;  // User tries to park at 3 PM (Peak Hour)
+        finalPrice = pricingSystem.calculatePrice(spot.id, currentHour);
+        cout << "Allocated Spot ID: " << spot.id << ", Price: $" << finalPrice << " (At 3 PM)" << endl;
+
+    } catch (runtime_error& e) {
+        cout << e.what() << endl;
+    }
+
+    return 0;
+}
+📌 How This Code Works:
+Dynamic Pricing Calculation:
+
+When a user tries to park, the system checks the current hour (currentHour).
+
+Based on the hour, the price is dynamically calculated using the getDynamicPrice() function.
+
+Peak Hour = Base Price * 2 (Expensive).
+
+Non-Peak Hour = Base Price * 0.5 (Cheaper).
+
+Storing Spots:
+
+Each spot has a basePrice which is stored in spotMap.
+
+When a user tries to park, the price is dynamically calculated based on the currentHour.
+
+📌 Sample Output:
+yaml
+Copy
+Edit
+Allocated Spot ID: 2, Price: $8 (At 9 AM)
+Allocated Spot ID: 1, Price: $2.5 (At 7 PM)
+Allocated Spot ID: 3, Price: $12 (At 3 PM)
+⏳ Time & Space Complexity Analysis:
+Add Spot (addSpot())
+
+Time Complexity: O(log n) (Insertion in priority queue).
+
+Space Complexity: O(n) (Maintains a priority queue and map).
+
+Get Cheapest Spot (getCheapestSpot())
+
+Time Complexity: O(log n) (Removal from priority queue).
+
+Space Complexity: O(1) (Returns a single spot).
+
+Calculate Price (calculatePrice())
+
+Time Complexity: O(1) (Lookup from map and calculation).
+
+Space Complexity: O(1) (No extra space used).
+
+
+
+
+
+
+
+2. Pathfinding (Dijkstra Algorithm)
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+// Parking Lot Class implementing Dijkstra's Algorithm
+class ParkingLot {
+    int n;  // Number of spots/nodes
+    vector<vector<pair<int, int>>> adj;  // Adjacency list: node -> [(neighbor, weight)]
+
+public:
+    ParkingLot(int n) : n(n), adj(n) {}
+
+    // Adding paths between parking spots
+    void addPath(int u, int v, int w) {
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    // Dijkstra's Algorithm to find shortest path from entrance to all spots
+    vector<int> findShortestPath(int start) {
+        vector<int> dist(n, INF);
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+
+        dist[start] = 0;
+        pq.push({0, start});
+
+        while (!pq.empty()) {
+            int d = pq.top().first;
+            int u = pq.top().second;
+            pq.pop();
+
+            if (d > dist[u]) continue; // Outdated entry, skip
+
+            for (auto &[v, w] : adj[u]) {
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.push({dist[v], v});
+                }
+            }
+        }
+        return dist; // Return distances to all spots from the entrance
+    }
+};
+
+int main() {
+    ParkingLot lot(6);  // 6 parking spots (0 to 5)
+
+    // Adding paths between spots
+    lot.addPath(0, 1, 2);  // Entrance to Spot 1 (Distance: 2)
+    lot.addPath(0, 2, 4);  // Entrance to Spot 2 (Distance: 4)
+    lot.addPath(1, 3, 7);  // Spot 1 to Spot 3 (Distance: 7)
+    lot.addPath(1, 4, 3);  // Spot 1 to Spot 4 (Distance: 3)
+    lot.addPath(2, 4, 1);  // Spot 2 to Spot 4 (Distance: 1)
+    lot.addPath(3, 5, 2);  // Spot 3 to Spot 5 (Distance: 2)
+    lot.addPath(4, 5, 5);  // Spot 4 to Spot 5 (Distance: 5)
+
+    int entrance = 0;
+    vector<int> distances = lot.findShortestPath(entrance);
+
+    cout << "Shortest distance from Entrance (0) to each spot:" << endl;
+    for (int i = 0; i < distances.size(); ++i) {
+        cout << "Spot " << i << ": " << (distances[i] == INF ? -1 : distances[i]) << endl;
+    }
+    
+    return 0;
+}
+📌 Explanation:
+adj vector: Stores paths between spots as an adjacency list ([neighbor, distance]).
+
+findShortestPath(): Implements Dijkstra’s Algorithm using a priority queue.
+
+dist vector: Stores the shortest distance from the entrance to each spot.
+
+pq: A min-heap priority queue that ensures the shortest distance is always processed first.
+
+📌 Sample Input (Graph Definition):
+cpp
+Copy
+Edit
+lot.addPath(0, 1, 2);  // Entrance to Spot 1 (Distance: 2)
+lot.addPath(0, 2, 4);  // Entrance to Spot 2 (Distance: 4)
+lot.addPath(1, 3, 7);  // Spot 1 to Spot 3 (Distance: 7)
+lot.addPath(1, 4, 3);  // Spot 1 to Spot 4 (Distance: 3)
+lot.addPath(2, 4, 1);  // Spot 2 to Spot 4 (Distance: 1)
+lot.addPath(3, 5, 2);  // Spot 3 to Spot 5 (Distance: 2)
+lot.addPath(4, 5, 5);  // Spot 4 to Spot 5 (Distance: 5)
+📌 Sample Output:
+yaml
+Copy
+Edit
+Shortest distance from Entrance (0) to each spot:
+Spot 0: 0
+Spot 1: 2
+Spot 2: 4
+Spot 3: 9
+Spot 4: 5
+Spot 5: 10
+📊 Time & Space Complexity Analysis:
+✅ Time Complexity:
+For a graph with V nodes and E edges:
+
+Building the Graph: O(E) (Adding edges).
+
+Dijkstra’s Algorithm: O((V + E) log V)
+
+Each node is visited once (V operations).
+
+For every node, we process all connected edges (E operations).
+
+Priority queue operations take O(log V) time.
+
+✅ Space Complexity:
+Graph Representation: O(V + E)
+
+V nodes stored in the adj list.
+
+E edges stored as pairs.
+
+Priority Queue: O(V) at worst case (all nodes are in the queue).
+
+Distance Array: O(V) for storing shortest distances.
+
+
+
+
+
+
+
+
+Spot Allocation Algorithm (Best-Fit Strategy)
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// Enum for vehicle types
+enum VehicleType { MOTORCYCLE, CAR, TRUCK };
+
+// Class representing a Parking Spot
+class Spot {
+public:
+    int id;
+    string size;
+    bool isAvailable;
+
+    Spot(int id, string size) : id(id), size(size), isAvailable(true) {}
+};
+
+// Spot Allocation System
+class SpotAllocation {
+    map<string, vector<Spot>> availableSpots;  // Categorized by spot size
+
+public:
+    // Adding spots based on size category
+    void addSpot(int id, string size) {
+        availableSpots[size].emplace_back(id, size);
+    }
+
+    // Allocate the most suitable spot based on vehicle type
+    int allocateSpot(VehicleType vehicleType) {
+        string requiredSize;
+
+        // Determine the required spot size based on vehicle type
+        if (vehicleType == MOTORCYCLE) requiredSize = "Small";
+        else if (vehicleType == CAR) requiredSize = "Medium";
+        else if (vehicleType == TRUCK) requiredSize = "Large";
+
+        // Try to find the most suitable spot for the vehicle type
+        if (!availableSpots[requiredSize].empty()) {
+            for (Spot &spot : availableSpots[requiredSize]) {
+                if (spot.isAvailable) {
+                    spot.isAvailable = false;  // Mark spot as occupied
+                    return spot.id;
+                }
+            }
+        }
+        
+        // If no exact match found, try to find a larger spot
+        if (requiredSize == "Small" && !availableSpots["Medium"].empty()) {
+            for (Spot &spot : availableSpots["Medium"]) {
+                if (spot.isAvailable) {
+                    spot.isAvailable = false;
+                    return spot.id;
+                }
+            }
+        }
+
+        if (requiredSize == "Small" || requiredSize == "Medium") {
+            if (!availableSpots["Large"].empty()) {
+                for (Spot &spot : availableSpots["Large"]) {
+                    if (spot.isAvailable) {
+                        spot.isAvailable = false;
+                        return spot.id;
+                    }
+                }
+            }
+        }
+
+        // If no spot is found
+        return -1;
+    }
+
+    // Release a spot
+    void releaseSpot(int id, string size) {
+        for (Spot &spot : availableSpots[size]) {
+            if (spot.id == id) {
+                spot.isAvailable = true;
+                break;
+            }
+        }
+    }
+};
+
+int main() {
+    SpotAllocation allocationSystem;
+
+    // Adding parking spots
+    allocationSystem.addSpot(1, "Small");
+    allocationSystem.addSpot(2, "Small");
+    allocationSystem.addSpot(3, "Medium");
+    allocationSystem.addSpot(4, "Medium");
+    allocationSystem.addSpot(5, "Large");
+
+    // Allocating spots to vehicles
+    int spotId = allocationSystem.allocateSpot(MOTORCYCLE);
+    cout << "Motorcycle allocated Spot ID: " << (spotId == -1 ? -1 : spotId) << endl;
+
+    spotId = allocationSystem.allocateSpot(CAR);
+    cout << "Car allocated Spot ID: " << (spotId == -1 ? -1 : spotId) << endl;
+
+    spotId = allocationSystem.allocateSpot(TRUCK);
+    cout << "Truck allocated Spot ID: " << (spotId == -1 ? -1 : spotId) << endl;
+
+    // Releasing a spot and reallocating
+    allocationSystem.releaseSpot(1, "Small");
+    spotId = allocationSystem.allocateSpot(MOTORCYCLE);
+    cout << "Motorcycle reallocated Spot ID: " << (spotId == -1 ? -1 : spotId) << endl;
+
+    return 0;
+}
+📌 Explanation:
+addSpot():
+
+Adds parking spots of various sizes (Small, Medium, Large).
+
+allocateSpot():
+
+Finds the most suitable spot based on the vehicle type.
+
+If a suitable spot size is not available, it tries to allocate a larger spot.
+
+releaseSpot():
+
+Frees up a spot for reuse.
+
+📌 Sample Input:
+cpp
+Copy
+Edit
+// Adding spots of various sizes
+allocationSystem.addSpot(1, "Small");
+allocationSystem.addSpot(2, "Small");
+allocationSystem.addSpot(3, "Medium");
+allocationSystem.addSpot(4, "Medium");
+allocationSystem.addSpot(5, "Large");
+
+// Allocating spots to different vehicles
+allocationSystem.allocateSpot(MOTORCYCLE);  // Finds Small Spot (ID: 1 or 2)
+allocationSystem.allocateSpot(CAR);         // Finds Medium Spot (ID: 3 or 4)
+allocationSystem.allocateSpot(TRUCK);       // Finds Large Spot (ID: 5)
+📌 Sample Output:
+yaml
+Copy
+Edit
+Motorcycle allocated Spot ID: 1
+Car allocated Spot ID: 3
+Truck allocated Spot ID: 5
+Motorcycle reallocated Spot ID: 1
+📊 Time & Space Complexity Analysis:
+✅ Time Complexity:
+Adding a Spot (addSpot()):
+
+Time Complexity: O(1) - Simply inserting a spot into the appropriate vector.
+
+Allocating a Spot (allocateSpot()):
+
+Best Case: O(m) - Where m is the number of spots of the required size.
+
+Worst Case: O(m1 + m2 + m3) - Where m1, m2, m3 are the sizes of Small, Medium, and Large spot vectors respectively.
+
+Usually, this is very efficient since it tries to find the closest fit first.
+
+Releasing a Spot (releaseSpot()):
+
+Time Complexity: O(m) - Where m is the size of the vector for that spot size.
+

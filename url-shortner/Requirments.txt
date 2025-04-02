@@ -1,0 +1,54 @@
+3. System Design goals
+Functional Requirements:
+
+Service should be able to create shortened url/links against a long url
+Click to the short URL should redirect the user to the original long URL
+Shortened link should be as small as possible
+Users can create custom url with maximum character limit of 16
+Service should collect metrics like most clicked links
+Once a shortened link is generated it should stay in system for lifetime
+
+
+Non-Functional Requirements:
+
+Service should be up and running all the time
+URL redirection should be fast and should not degrade at any point of time (Even during peak loads)
+Service should expose REST API’s so that it can be integrated with third party applications
+
+
+why 16:
+
+The 16-character limit for custom URLs in URL shorteners is usually set for a few practical reasons:
+
+1. Database Optimization:
+URLs are stored in a database, often indexed for fast retrieval.
+
+Keeping the URL length short allows for faster lookups and better database performance.
+
+Shorter URLs use less storage space, which is critical when storing millions of URLs.
+
+2. Readability & Usability:
+Short URLs are meant to be user-friendly and easily shareable.
+
+URLs longer than 16 characters start losing the readability and convenience advantage.
+
+3. Collision Avoidance:
+URL shorteners generate a unique identifier for each URL.
+
+With a 16-character limit, even with a character set of just alphanumeric (62 characters: a-z, A-Z, 0-9), the number of unique combinations is:
+
+62
+16
+≈
+4.7
+×
+10
+28
+62 
+16
+ ≈4.7×10 
+28
+ 
+This enormous number of combinations ensures uniqueness without collisions for a long time.
+
+

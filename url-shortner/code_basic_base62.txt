@@ -1,0 +1,329 @@
+Here's a basic implementation of a URL Shortener Service in C++ with the specified functional requirements:
+
+cpp
+Copy
+Edit
+#include <iostream>
+#include <unordered_map>
+#include <string>
+#include <ctime>
+#include <cstdlib>
+
+using namespace std;
+
+class URLShortener {
+private:
+    unordered_map<string, pair<string, time_t>> urlMap;
+    string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const int ALIAS_LENGTH = 6;  // Length of the short URL code
+    const int EXPIRY_TIME = 86400; // Link expiry time in seconds (24 hours)
+
+    // Function to generate a random alias
+    string generateAlias() {
+        string alias = "";
+        for (int i = 0; i < ALIAS_LENGTH; ++i) {
+            alias += characters[rand() % characters.size()];
+        }
+        return alias;
+    }
+
+public:
+    URLShortener() {
+        srand(time(0));  // Seed random number generator
+    }
+
+    // Function to create a short URL
+    string shortenURL(const string& longURL) {
+        string alias = generateAlias();
+        
+        // Ensure alias is unique
+        while (urlMap.find(alias) != urlMap.end()) {
+            alias = generateAlias();
+        }
+
+        time_t currentTime = time(0);
+        urlMap[alias] = {longURL, currentTime};
+
+        return "short.ly/" + alias;
+    }
+
+    // Function to retrieve the original URL
+    string retrieveURL(const string& shortURL) {
+        string alias = shortURL.substr(shortURL.find_last_of("/") + 1);
+
+        if (urlMap.find(alias) != urlMap.end()) {
+            time_t currentTime = time(0);
+
+            // Check if the link is expired
+            if (currentTime - urlMap[alias].second <= EXPIRY_TIME) {
+                return urlMap[alias].first;
+            } else {
+                urlMap.erase(alias);  // Remove expired link
+                return "Error: Link has expired.";
+            }
+        }
+        return "Error: URL not found.";
+    }
+};
+
+int main() {
+    URLShortener urlShortener;
+
+    // Test creating a short URL
+    string longURL = "https://www.example.com/very/long/url/with/lots/of/parameters";
+    string shortURL = urlShortener.shortenURL(longURL);
+
+    cout << "Original URL: " << longURL << endl;
+    cout << "Short URL: " << shortURL << endl;
+
+    // Test retrieving the original URL
+    string retrievedURL = urlShortener.retrieveURL(shortURL);
+    cout << "Retrieved URL: " << retrievedURL << endl;
+
+    return 0;
+}
+
+
+✅ Features:
+Generates a random, unique alias for each long URL.
+
+Redirects to the original URL if the alias exists.
+
+Links expire after 24 hours (adjustable via EXPIRY_TIME).
+
+Stores URLs and their creation time in a unordered_map.
+
+
+
+Time and space complexity:
+
+ 1. shortenURL() Function
+cpp
+Copy
+Edit
+string shortenURL(const string& longURL);
+✅ Operations:
+Generate Random Alias:
+
+Random generation of a string of length 6 from 62 possible characters.
+
+Complexity: 
+𝑂
+(
+6
+)
+=
+𝑂
+(
+1
+)
+O(6)=O(1) (constant time generation).
+
+Checking Uniqueness in unordered_map:
+
+Checking if the alias already exists - Average case: 
+𝑂
+(
+1
+)
+O(1), Worst case: 
+𝑂
+(
+𝑁
+)
+O(N) (Highly unlikely in practice).
+
+While loop runs until a unique alias is found, which is expected to be very quick unless there are millions of URLs stored.
+
+Storing URL in unordered_map:
+
+Insertion operation in unordered_map - Average case: 
+𝑂
+(
+1
+)
+O(1).
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+(The while loop almost always terminates quickly, making average complexity constant.)
+
+📌 Space Complexity:
+𝑂
+(
+𝑁
+)
+O(N)
+Where N is the number of unique URLs stored. Each entry in urlMap contains:
+
+alias: A string of 6 characters (6 bytes).
+
+longURL: Assuming the average URL size is around 2KB.
+
+time_t: Stored as 8 bytes.
+
+Total per entry: 
+6
++
+2048
++
+8
+=
+2062
+6+2048+8=2062 bytes ≈ 2KB per entry.
+
+🔥 2. retrieveURL() Function
+cpp
+Copy
+Edit
+string retrieveURL(const string& shortURL);
+✅ Operations:
+Extract Alias from URL:
+
+String manipulation (substring extraction) - 
+𝑂
+(
+1
+)
+O(1).
+
+Lookup in unordered_map:
+
+Average case: 
+𝑂
+(
+1
+)
+O(1), Worst case: 
+𝑂
+(
+𝑁
+)
+O(N) (Unlikely).
+
+Checking Expiry:
+
+Simple comparison - 
+𝑂
+(
+1
+)
+O(1).
+
+Removing Expired Link:
+
+Deletion from unordered_map - 
+𝑂
+(
+1
+)
+O(1).
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+📌 Space Complexity:
+𝑂
+(
+1
+)
+O(1)
+(Only constant space used for temporary variables.)
+
+🔥 3. generateAlias() Function (Helper Function)
+cpp
+Copy
+Edit
+string generateAlias();
+✅ Operations:
+Generating a Random String of Length 6:
+
+For loop runs 6 times, each picking a random character from 62 possible characters.
+
+Complexity: 
+𝑂
+(
+6
+)
+=
+𝑂
+(
+1
+)
+O(6)=O(1).
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+📌 Space Complexity:
+𝑂
+(
+1
+)
+O(1)
+(Only storing a 6-character string.)
+
+📌 Space Complexity of Entire System
+The total space complexity is determined by the size of the urlMap unordered_map.
+
+💾 Space Per Entry Calculation:
+Component	Size (Bytes)
+Alias	6 bytes
+Long URL	2048 bytes (2 KB)
+Time (time_t)	8 bytes
+Total	2 KB per entry
+📌 Total Space Complexity:
+𝑂
+(
+𝑁
+)
+O(N)
+Where 
+𝑁
+N is the number of unique URLs stored.
+
+📊 Summary Table
+Function	Time Complexity (Average)	Space Complexity
+shortenURL()	
+𝑂
+(
+1
+)
+O(1)	
+𝑂
+(
+𝑁
+)
+O(N)
+retrieveURL()	
+𝑂
+(
+1
+)
+O(1)	
+𝑂
+(
+1
+)
+O(1)
+generateAlias()	
+𝑂
+(
+1
+)
+O(1)	
+𝑂
+(
+1
+)
+O(1)

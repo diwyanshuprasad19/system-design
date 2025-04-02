@@ -1,0 +1,74 @@
++----------------------+
+|   Admin Dashboard    | ← Optional UI to manage rules
+|   (React, Django)    |
++----------+-----------+
+           |
+           | REST / gRPC
+           V
++----------------------+
+|   RULES DATABASE     | ← PostgreSQL, MySQL, MongoDB
++----------------------+
+|  rule_id             |
+|  key_type (user, ip) |
+|  key_value           |
+|  limit               |
+|  window_seconds      |
+|  priority (optional) |
+|  enabled             |
++----------------------+
+           |
+           |  🕒 Periodic fetch / event trigger
+           V
++----------------------+
+|  RULE SYNC WORKER    | ← Python/Go/Node service
++----------------------+
+| - Fetches all active rules
+| - Converts to cache-friendly format
+| - Pushes to Redis/Memcached
++----------------------+
+           |
+           V
++------------------------+
+|    RULES CACHE         | ← Redis, Memcached (read-optimized)
++------------------------+
+| Key: rule:user:user_123  → {limit: 100, window: 60}
+| Key: rule:ip:192.168.1.1 → {limit: 20, window: 60}
++------------------------+
+           ↑
+           |
++------------------------+
+|  RATE LIMITER NODE(s)  |
++------------------------+
+| - On request, looks up rules from CACHE
+| - If cache miss → fallback to default / deny
++------------------------+
+
+
+
+🌍 CLIENT REQUEST (Web / Mobile / API)
+        |
+        V
++----------------------+
+|    LOAD BALANCER     |  ← Round-robin traffic to RateLimiter pods
++----------------------+
+        |
+        V
++---------------------------------------------------------------+
+|                 RATE LIMITER CLUSTER (Stateless Pods)         |
+|  +----------------+   +----------------+   +----------------+ |
+|  | Rate Limiter 1 |   | Rate Limiter 2 |   | Rate Limiter 3 | |
+|  |----------------|   |----------------|   |----------------| |
+|  | - Auth Client  |   | - Auth Client  |   | - Auth Client  | | ← External JWT validator
+|  | - Rules Cache  |   | - Rules Cache  |   | - Rules Cache  | | ← Fetched from Rules Cache Redis
+|  | - Redis Client |   | - Redis Client |   | - Redis Client | | ← Connects to counter Redis
+|  +----------------+   +----------------+   +----------------+ |
++---------------------------------------------------------------+
+        |
+        | ✅ Allowed → Forward to App Server
+        | ❌ Rate Limited
+        |     ├── Option 1: Return 429
+        |     └── Option 2: Push to Queue
+        V
++----------------------------+
+|     APPLICATION SERVERS    | ← Main business logic / APIs
++----------------------------+

@@ -1,0 +1,277 @@
+Minimum Requirements for Parking Lot Management System
+
+Entry & Exit System:
+
+Allow vehicles to enter and exit the parking lot.
+
+Generate tickets or records for entry and exit.
+
+Spot Management:
+
+Assign available spots based on vehicle type and size.
+
+Release spots upon vehicle exit.
+
+Basic Payment System:
+
+Support payment through at least one method (e.g., cash or UPI).
+
+Spot Tracking:
+
+Track available and occupied spots in real-time.
+
+Vehicle & Spot Types:
+
+Basic differentiation between motorcycles, cars, and trucks.
+
+Define at least two spot sizes: Small & Large.
+
+Pricing System:
+
+Basic pricing based on duration of stay.
+
+Generate simple bills (Base Fare only).
+
+
+
+
+
+
+ParkingLotManagement.cpp (Without Spot Size in Vehicle Class)
+cpp
+Copy
+Edit
+#include <bits/stdc++.h>
+using namespace std;
+
+// Vehicle Interface (Single Responsibility)
+class Vehicle {
+public:
+    virtual string getVehicleType() = 0;
+    virtual ~Vehicle() = default;
+};
+
+// Concrete Vehicle Classes (Open/Closed Principle)
+class Motorcycle : public Vehicle {
+public:
+    string getVehicleType() override {
+        return "Motorcycle";
+    }
+};
+
+class Car : public Vehicle {
+public:
+    string getVehicleType() override {
+        return "Car";
+    }
+};
+
+class Truck : public Vehicle {
+public:
+    string getVehicleType() override {
+        return "Truck";
+    }
+};
+
+// Ticket Class (Single Responsibility)
+class Ticket {
+    int ticketID;
+    time_t entryTime;
+
+public:
+    Ticket(int id) : ticketID(id), entryTime(time(nullptr)) {}
+
+    // Time Complexity: O(1), Space Complexity: O(1)
+    int getTicketID() const { return ticketID; }
+
+    // Time Complexity: O(1), Space Complexity: O(1)
+    time_t getEntryTime() const { return entryTime; }
+};
+
+// ParkingSpot Class (Liskov Substitution Principle)
+class ParkingSpot {
+    int spotID;
+    bool isOccupied;
+    Vehicle* currentVehicle;
+
+public:
+    ParkingSpot(int id) : spotID(id), isOccupied(false), currentVehicle(nullptr) {}
+
+    // Assign vehicle to the spot
+    // Time Complexity: O(1), Space Complexity: O(1)
+    bool assignVehicle(Vehicle* vehicle) {
+        if (!isOccupied) {
+            currentVehicle = vehicle;
+            isOccupied = true;
+            return true;
+        }
+        return false;
+    }
+
+    // Release the spot
+    // Time Complexity: O(1), Space Complexity: O(1)
+    void releaseSpot() {
+        isOccupied = false;
+        currentVehicle = nullptr;
+    }
+
+    // Check if the spot is available
+    // Time Complexity: O(1), Space Complexity: O(1)
+    bool isAvailable() const {
+        return !isOccupied;
+    }
+
+    // Get the spot ID
+    // Time Complexity: O(1), Space Complexity: O(1)
+    int getSpotID() const {
+        return spotID;
+    }
+};
+
+// Payment Interface (Interface Segregation Principle)
+class Payment {
+public:
+    virtual void makePayment(double amount) = 0;
+    virtual ~Payment() = default;
+};
+
+class CashPayment : public Payment {
+public:
+    // Process the payment
+    // Time Complexity: O(1), Space Complexity: O(1)
+    void makePayment(double amount) override {
+        cout << "Cash Payment of $" << fixed << setprecision(2) << amount << " successful.\n";
+    }
+};
+
+// ParkingLot Class (Dependency Inversion Principle)
+class ParkingLot {
+    map<int, ParkingSpot*> spots;
+    int ticketCounter;
+    double hourlyRate;
+
+public:
+    // Constructor
+    // Time Complexity: O(n), Space Complexity: O(n)
+    ParkingLot(int totalSpots, double rate) : ticketCounter(1), hourlyRate(rate) {
+        for (int i = 1; i <= totalSpots; ++i) {
+            spots[i] = new ParkingSpot(i);
+        }
+    }
+
+    // Destructor
+    // Time Complexity: O(n), Space Complexity: O(1)
+    ~ParkingLot() {
+        for (auto& pair : spots) {
+            delete pair.second;
+        }
+    }
+
+    // Generate a ticket
+    // Time Complexity: O(1), Space Complexity: O(1)
+    Ticket* generateTicket() {
+        return new Ticket(ticketCounter++);
+    }
+
+    // Park a vehicle in the first available spot
+    // Time Complexity: O(n), Space Complexity: O(1)
+    bool parkVehicle(Vehicle* vehicle) {
+        for (auto& pair : spots) {
+            if (pair.second->isAvailable()) {
+                pair.second->assignVehicle(vehicle);
+                cout << "Vehicle parked at spot " << pair.first << ".\n";
+                return true;
+            }
+        }
+        cout << "No available spots.\n";
+        return false;
+    }
+
+    // Release a parking spot
+    // Time Complexity: O(1), Space Complexity: O(1)
+    void releaseSpot(int spotID) {
+        if (spots.count(spotID) == 0) {
+            cout << "Invalid Spot ID.\n";
+            return;
+        }
+        
+        if (spots[spotID]->isAvailable()) {
+            cout << "Spot " << spotID << " is already vacant.\n";
+        } else {
+            spots[spotID]->releaseSpot();
+            cout << "Spot " << spotID << " is now vacant.\n";
+        }
+    }
+
+    // Process the payment for parking
+    // Time Complexity: O(1), Space Complexity: O(1)
+    void processPayment(double duration) {
+        double amount = duration * hourlyRate;
+        Payment* payment = new CashPayment();
+        payment->makePayment(amount);
+        delete payment;
+    }
+};
+
+// Main function to demonstrate the Parking Lot System
+int main() {
+    ParkingLot lot(5, 10.0);  // 5 spots, $10 per hour
+
+    Vehicle* car1 = new Car();
+    Vehicle* bike1 = new Motorcycle();
+    Vehicle* truck1 = new Truck();
+
+    // Vehicle Entry
+    Ticket* ticket1 = lot.generateTicket();
+    lot.parkVehicle(car1);
+
+    Ticket* ticket2 = lot.generateTicket();
+    lot.parkVehicle(bike1);
+
+    Ticket* ticket3 = lot.generateTicket();
+    lot.parkVehicle(truck1);
+
+    // Vehicle Exit and Payment
+    lot.releaseSpot(1);
+    lot.processPayment(2.0);  // Example: 2 hours
+
+    // Cleanup
+    delete car1;
+    delete bike1;
+    delete truck1;
+    delete ticket1;
+    delete ticket2;
+    delete ticket3;
+
+    return 0;
+}
+✅ Time and Space Complexity Analysis
+Ticket Generation (generateTicket())
+
+Time: O(1) - Simply increments the ticket counter.
+
+Space: O(1) - Allocates memory for a ticket object.
+
+Parking a Vehicle (parkVehicle())
+
+Time: O(n) - Scans all spots to find an available one.
+
+Space: O(1) - Only one spot is assigned at a time.
+
+Releasing a Spot (releaseSpot())
+
+Time: O(1) - Checks availability and releases the spot.
+
+Space: O(1) - No extra memory is used.
+
+Processing Payment (processPayment())
+
+Time: O(1) - Simple calculation of amount and displaying payment.
+
+Space: O(1) - Uses minimal memory for processing payment.
+
+Parking Lot Construction & Destruction (ParkingLot(), ~ParkingLot())
+
+Time: O(n) - Creating or deleting n parking spots.
+
+Space: O(n) - Stores n parking spot objects.

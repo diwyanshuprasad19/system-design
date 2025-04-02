@@ -1,0 +1,225 @@
+Algorithm REST Endpoints (Following Your Specification)
+I'll design the API Contracts exactly like you described, using the proper syntax. We'll have:
+
+URL Creation (With or Without Custom Alias)
+
+URL Redirection
+
+📌 1. URL Creation Endpoint (Create a Short URL)
+🔍 Endpoint:
+ruby
+Copy
+Edit
+POST: https://tinyurl.com/app/api/create
+🔍 Description:
+Creates a short URL from a long URL. Optionally allows users to provide a custom alias. Requires API Key Authentication.
+
+🔍 Headers:
+http
+Copy
+Edit
+Content-Type: application/json
+Authorization: Bearer <api_key>
+🔍 Request Body:
+json
+Copy
+Edit
+{
+  "long_url": "https://www.example.com/very/long/url",
+  "custom_url": "mycustomurl"   // (Optional) Custom alias provided by the user.
+}
+🔍 Response: (Success - HTTP 200 OK)
+json
+Copy
+Edit
+{
+  "status": "OK",
+  "short_url": "https://tinyurl.com/mycustomurl",
+  "message": "Short URL generated successfully."
+}
+🔍 Response: (Success Without Custom Alias - HTTP 200 OK)
+json
+Copy
+Edit
+{
+  "status": "OK",
+  "short_url": "https://tinyurl.com/abc123",
+  "message": "Short URL generated successfully."
+}
+🔍 Response: (Error - HTTP 400 Bad Request)
+json
+Copy
+Edit
+{
+  "status": "ERROR",
+  "message": "Missing required parameter: long_url."
+}
+🔍 Response: (Error - HTTP 409 Conflict)
+json
+Copy
+Edit
+{
+  "status": "ERROR",
+  "message": "Custom URL 'mycustomurl' is already taken. Please try a different one."
+}
+
+
+
+
+
+
+📌 2. URL Redirection Endpoint (Access Short URL)
+🔍 Endpoint:
+arduino
+Copy
+Edit
+GET: https://tinyurl.com/{short_url}
+🔍 Description:
+Redirects the user to the original URL.
+
+🔍 Headers:
+http
+Copy
+Edit
+Accept: application/json
+🔍 Response: (Success - HTTP 302 Found)
+http
+Copy
+Edit
+Location: https://www.example.com/very/long/url
+The response will be a redirect to the original URL, handled by the browser automatically.
+
+🔍 Response: (Error - HTTP 404 Not Found)
+json
+Copy
+Edit
+{
+  "status": "ERROR",
+  "message": "Short URL not found or has expired."
+}
+
+
+
+📌 3. Explanation of Parameters
+Parameter	Type	Required	Description
+long_url	String	Yes	The original long URL that needs to be shortened.
+api_key	String	Yes	The unique API key for authentication.
+custom_url	String	No	User-defined alias for the short URL (if available).
+short_url	String (Path)	Yes	The generated short URL for redirection.
+
+
+
+📌 4. Status Codes Explained
+HTTP Status Code	Meaning	When It's Returned
+200 OK	Request was successful.	Short URL was created successfully.
+302 Found	Redirect to the long URL.	When a valid short URL is accessed.
+400 Bad Request	Missing parameters or invalid request.	When long_url is not provided.
+401 Unauthorized	Invalid or missing API Key.	When api_key is not provided.
+404 Not Found	Short URL not found.	When the requested short URL doesn't exist or has expired.
+409 Conflict	Custom URL already exists.	When trying to create a duplicate custom alias.
+
+
+
+📌 5. Summary of APIs
+API Operation	Method	Endpoint	Description
+Create URL	POST	/app/api/create	Generate a new short URL.
+Redirect URL	GET	/{short_url}	Redirect to the original URL.
+
+
+
+
+
+Why Use HTTP 302 Redirect Instead of HTTP 301 (Real-Time Explanation)
+📌 HTTP 302 vs. HTTP 301 - What’s the Difference?
+Aspect	HTTP 302 (Found)	HTTP 301 (Moved Permanently)
+Purpose	Temporary Redirect.	Permanent Redirect.
+Browser Caching	No caching (or minimal caching). The browser will always reach out to the backend for redirection.	Cached by Browsers (URL mapping is stored locally by the browser).
+Analytics Friendly	✅ Ideal for logging and analytics.	❌ Not ideal since the browser doesn’t reach the backend once cached.
+SEO Impact	No impact on SEO.	Used for SEO to indicate permanent changes.
+Use Case	Dynamic or frequently changing URLs.	Permanent URL changes (e.g., domain changes).
+📌 Why HTTP 302 is Important for URL Shortener System
+The main reason to use HTTP 302 instead of HTTP 301 in a URL Shortener is:
+
+Analytics Collection:
+
+When you use HTTP 302, every time a user accesses the short URL, the request is sent to your backend.
+
+This allows you to log and track important data such as:
+
+Click counts.
+
+User’s IP address.
+
+Geolocation.
+
+Browser type.
+
+Device type (Mobile/Desktop).
+
+Referrer URL (Source of the click).
+
+Preventing Caching:
+
+HTTP 301 redirects are cached by browsers and search engines.
+
+If you use HTTP 301, once the URL is cached by the browser, the user will be redirected locally (browser-side) without hitting your backend server again.
+
+This would prevent you from collecting important analytics data.
+
+Dynamic URL Handling:
+
+URL shorteners often provide the ability to modify destination URLs.
+
+Using HTTP 302 ensures the backend handles every request and applies the latest configuration.
+
+📌 Real-Time Example
+🔍 Scenario:
+You have a URL Shortener service called TinyURL.
+
+User Creates a Short URL:
+
+Original URL: https://example.com/long/article/about/django/url-shortener/
+
+Generated Short URL: https://tinyurl.com/abc123
+
+Backend saves it in the database and waits for redirection requests.
+
+User Clicks the Short URL:
+
+The browser sends a GET request to:
+
+nginx
+Copy
+Edit
+GET https://tinyurl.com/abc123
+Server Responds With HTTP 302 (Temporary Redirect):
+
+http
+Copy
+Edit
+HTTP/1.1 302 Found
+Location: https://example.com/long/article/about/django/url-shortener/
+What Happens:
+
+The browser receives the 302 response and immediately redirects to the original URL.
+
+But before the redirection, your backend server logs valuable analytics information like:
+
+IP Address: 103.210.50.14
+
+Browser: Chrome
+
+Device: Mobile
+
+Geolocation: India
+
+Referrer: https://www.google.com/
+
+Why HTTP 302 Is Important Here:
+
+Every time the user clicks on the link, the request reaches your backend server first.
+
+You can accurately count each click and collect analytics data.
+
+With HTTP 301, the browser would have cached the redirection and only redirected the user without contacting your server.
+

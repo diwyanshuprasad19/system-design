@@ -1,0 +1,203 @@
+What Is Sliding Window Counter?
+A rate limiting algorithm that splits a time window (like 1 hour) into multiple smaller buckets (like 60 1-min blocks).
+It then:
+
+Stores counts (not timestamps!) per bucket
+
+When a request comes, it adds up the counts from the relevant buckets (like last 60 mins)
+
+If total < limit → ✅ allow
+
+Otherwise → ❌ deny
+
+🧠 Layman Explanation
+Imagine a whiteboard with 60 boxes, each for a minute in the past hour.
+Every time someone makes a request:
+
+You put a tally mark in the current box.
+
+When the clock ticks, you shift focus to the next box.
+
+The algorithm adds all 60 boxes → decides whether to allow another request.
+
+📈 Visualization
+sql
+Copy
+Edit
+Current Time: 2:50 PM
+Sliding Window: 2:50 → 3:50
+1-Min Buckets:
+  [2:50-2:51] = 5
+  [2:49-2:50] = 3
+  [2:48-2:49] = 0
+  ...
+  Total in last hour = 60 → ✅ Request allowed
+🧪 Real-Time Use Case:
+Limit: 100 requests/hour
+
+Sub-window (bucket): 1 minute
+
+Per-minute limit: 5 requests
+
+💻 Efficient C++ Implementation (Sliding Window Counter)
+cpp
+Copy
+Edit
+#include <bits/stdc++.h>
+#include <chrono>
+#include <thread>
+using namespace std;
+
+class SlidingWindowCounter {
+private:
+    int hourlyLimit;
+    int perMinuteLimit;
+    int windowSizeMinutes;
+    unordered_map<long long, int> buckets;
+
+    long long getCurrentMinute() {
+        auto now = chrono::system_clock::now();
+        return chrono::duration_cast<chrono::minutes>(now.time_since_epoch()).count();
+    }
+
+public:
+    SlidingWindowCounter(int hourly, int perMin)
+        : hourlyLimit(hourly), perMinuteLimit(perMin), windowSizeMinutes(60) {}
+
+    bool tryProcessRequest() {
+        long long nowMinute = getCurrentMinute();
+
+        // Remove buckets older than 60 mins
+        for (auto it = buckets.begin(); it != buckets.end();) {
+            if (nowMinute - it->first >= windowSizeMinutes)
+                it = buckets.erase(it);
+            else
+                ++it;
+        }
+
+        // Sum over all buckets in last 60 minutes
+        int totalRequests = 0;
+        for (auto& [minute, count] : buckets)
+            totalRequests += count;
+
+        if (totalRequests >= hourlyLimit)
+            return false;
+
+        // Check this minute’s bucket
+        if (buckets[nowMinute] >= perMinuteLimit)
+            return false;
+
+        buckets[nowMinute]++;
+        return true;
+    }
+};
+
+int main() {
+    SlidingWindowCounter limiter(100, 5); // 100 req/hour, 5 req/min
+
+    for (int i = 1; i <= 120; i++) {
+        bool allowed = limiter.tryProcessRequest();
+        cout << "Request " << i << ": " << (allowed ? "Allowed ✅" : "Blocked ❌") << endl;
+        this_thread::sleep_for(chrono::milliseconds(500)); // 0.5 sec delay
+    }
+
+    return 0;
+}
+✅ Sample Output (Partial)
+yaml
+Copy
+Edit
+Request 1: Allowed ✅
+Request 2: Allowed ✅
+Request 3: Allowed ✅
+Request 4: Allowed ✅
+Request 5: Allowed ✅
+Request 6: Blocked ❌
+...
+Request 13: Allowed ✅ (after moving into new minute bucket)
+⚙️ Efficiency Benefits
+Factor	Sliding Window Log	Sliding Window Counter
+Stores each request	✅ Yes	❌ No
+Stores per-minute count	❌ No	✅ Yes
+Memory usage	High	Low
+Ideal for production?	⚠️ Limited	✅ Yes
+🧠 Summary
+Feature	Value
+Accurate under scale	✅ Yes
+Low memory usage	✅ Yes (buckets, not full logs)
+Sliding precision	✅ Yes (vs. fixed window edge burst)
+Ideal use case	APIs, auth, per-user request caps
+
+
+
+Sliding Window Log vs Sliding Window Counter
+Metric	Sliding Window Log	Sliding Window Counter
+What it stores	⏱️ Individual timestamps of each request	🧮 Aggregated count per time bucket (e.g., per minute)
+Time complexity	O(n) per request (removing outdated timestamps)	O(1) per request (just increment & sum)
+Space complexity	O(n) — stores every request individually	O(k) — only stores k buckets (e.g., 60 for hour)
+Precision	✅ Very precise (to the second)	⚖️ Slightly approximate (per bucket granularity)
+CPU usage	🔥 Higher at scale	🧊 Lower, predictable
+Memory usage	❌ Increases with traffic	✅ Constant space (fixed # of buckets)
+Ideal for	Few users, high precision	High concurrency, production-scale systems
+🧠 In Simple Terms
+🔹 Sliding Window Log
+Acts like a scroll of paper:
+Write the exact time of every request
+
+To decide if the next request is allowed:
+
+You scan and clean the log (remove expired timestamps)
+
+Count how many requests remain
+
+✅ High precision, ❌ High work per request
+
+🧪 Time complexity: O(n)
+🧪 Space complexity: O(n)
+(n = number of requests in the window)
+
+🔹 Sliding Window Counter
+Acts like a whiteboard with 60 boxes
+
+Each box is 1 minute
+
+You only track how many requests in each minute
+
+On a new request:
+
+You clean only old buckets (e.g., anything older than 60 min)
+
+Just sum 60 values
+
+🧪 Time complexity: O(1) to update and check
+🧪 Space complexity: O(k)
+(k = number of buckets, e.g., 60 for an hour)
+
+🧪 Real-World Example
+Let’s say:
+
+Your API gets 1 million requests per minute
+
+You want to allow 1000 req/hour per user
+
+With Log (per user)	With Counter (per user)
+Store 1000 timestamps	Store 60 integer values
+On each request: loop + count	Just sum 60 buckets
+CPU = 🔥	CPU = 🧊
+Now imagine 100K users concurrently →
+Log system blows up 💣
+Counter system runs smooth ✅
+
+✅ TL;DR Summary
+Feature	Sliding Window Log	Sliding Window Counter (✔ better)
+Precision	⏱️ To the second	🧮 To the bucket (e.g., 1 min)
+Memory cost per user	❌ Unbounded	✅ Fixed (e.g., 60 ints per user)
+Time to evaluate per request	❌ O(n)	✅ O(1)
+Performance at scale	❌ Poor for 100K users	✅ Efficient
+Suitable for high-throughput	❌ No	✅ Yes
+🎯 When to Use Each?
+Use Case	Recommendation
+Low traffic, high accuracy needed	Use Sliding Log
+Massive scale, real-time APIs	Use Sliding Counter ✅
+Precise fraud detection (banking)	Maybe Log
+Chat, search, message rate limits	Use Counter ✅

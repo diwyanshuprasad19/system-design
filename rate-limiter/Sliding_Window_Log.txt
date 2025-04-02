@@ -1,0 +1,108 @@
+What is Sliding Window Log?
+It keeps a log of timestamps for each request.
+When a new request arrives:
+
+The system removes outdated timestamps (outside the current window, e.g., 1 minute).
+
+Then it checks the count of timestamps remaining.
+
+If the number is below the limit → ✅ allow
+
+Else → ❌ deny
+
+🧠 Layman Explanation
+Imagine a guest logbook for your house.
+You only allow 5 guests per hour.
+Each time someone visits, you write their time in the logbook.
+Before letting the next guest in, you:
+
+Remove entries older than 1 hour.
+
+Count remaining guests.
+
+If fewer than 5 → let the guest in.
+
+📈 Real-Time Example
+Time	Action	Log	Result
+1:00:01	Request 1 → ✅	[1:00:01]	✅
+1:00:30	Request 2 → ✅	[1:00:01, 1:00:30]	✅
+1:00:50	Request 3 → ❌	[1:00:01, 1:00:30, 1:00:50]	❌
+1:01:40	Request 4 → ✅	[1:00:50, 1:01:40] (others expired)	✅
+✅ C++ Implementation (Simplified, Non-Threaded)
+cpp
+Copy
+Edit
+#include <bits/stdc++.h>
+#include <chrono>
+#include <thread>
+using namespace std;
+
+class SlidingWindowLogRateLimiter {
+private:
+    int requestLimit;
+    int windowSeconds;
+    deque<long long> requestTimestamps;
+
+    long long getCurrentTimeSeconds() {
+        auto now = chrono::system_clock::now();
+        auto duration = chrono::duration_cast<chrono::seconds>(now.time_since_epoch());
+        return duration.count();  // current time in seconds
+    }
+
+public:
+    SlidingWindowLogRateLimiter(int limit, int windowInSeconds)
+        : requestLimit(limit), windowSeconds(windowInSeconds) {}
+
+    bool tryProcessRequest() {
+        long long now = getCurrentTimeSeconds();
+
+        // Remove outdated timestamps
+        while (!requestTimestamps.empty() && now - requestTimestamps.front() > windowSeconds) {
+            requestTimestamps.pop_front();
+        }
+
+        if (requestTimestamps.size() < requestLimit) {
+            requestTimestamps.push_back(now);
+            return true;
+        }
+
+        return false;
+    }
+};
+
+int main() {
+    SlidingWindowLogRateLimiter limiter(5, 60); // 5 requests per 60 seconds
+
+    for (int i = 1; i <= 10; i++) {
+        bool allowed = limiter.tryProcessRequest();
+        cout << "Request " << i << ": " << (allowed ? "Allowed ✅" : "Blocked ❌") << endl;
+        this_thread::sleep_for(chrono::seconds(10)); // Simulate 10s delay
+    }
+
+    return 0;
+}
+🧪 Output
+yaml
+Copy
+Edit
+Request 1: Allowed ✅
+Request 2: Allowed ✅
+Request 3: Allowed ✅
+Request 4: Allowed ✅
+Request 5: Allowed ✅
+Request 6: Blocked ❌
+Request 7: Blocked ❌
+...
+Request 10: Allowed ✅ (after old ones expire)
+✅ Why Use Sliding Window Log?
+Feature	Value
+Accuracy	✅ Best among all limiters
+Allows smooth traffic	✅ Yes
+Memory usage	❌ Slightly higher (stores each request)
+Use case	✅ Real-time strict limits (e.g., login, payments)
+🧠 Summary: Sliding Window Log vs Others
+Feature	Token Bucket	Leaky Bucket	Fixed Window	Sliding Log
+Bursty traffic okay?	✅	❌	⚠️ Yes (edge burst)	✅
+Per-request memory?	❌	❌	❌	✅ (log)
+Most accurate?	❌	✅	❌	✅
+Production safe?	✅	✅	❌	✅

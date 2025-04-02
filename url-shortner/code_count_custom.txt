@@ -1,0 +1,315 @@
+#include <iostream>
+#include <unordered_map>
+#include <string>
+#include <ctime>
+#include <cstdlib>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class URLShortener {
+private:
+    unordered_map<string, pair<string, int>> urlMap; // Maps alias to (longURL, clickCount)
+    unordered_map<string, string> longURLMap;        // Maps longURL to alias for reuse
+    string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const int ALIAS_LENGTH = 6;  // Length of the random short URL code
+    const int MAX_CUSTOM_ALIAS_LENGTH = 16; // Maximum length for custom alias
+
+    // Function to generate a completely random alias using rand()
+    string generateAlias() {
+        string alias = "";
+        for (int i = 0; i < ALIAS_LENGTH; ++i) {
+            alias += characters[rand() % characters.size()];
+        }
+        return alias;
+    }
+
+public:
+    URLShortener() {
+        srand(time(0));  // Seed random number generator
+    }
+
+    // Function to create a short URL (supports custom aliases)
+    string shortenURL(const string& longURL, const string& customAlias = "") {
+        string alias;
+
+        // Check if the long URL already exists in the system
+        if (longURLMap.find(longURL) != longURLMap.end()) {
+            return "short.ly/" + longURLMap[longURL];  // Return existing short URL
+        }
+
+        if (!customAlias.empty()) {  // If a custom alias is provided
+            if (customAlias.size() > MAX_CUSTOM_ALIAS_LENGTH) {
+                return "Error: Custom alias exceeds maximum allowed length of 16 characters.";
+            }
+            alias = customAlias;
+
+            // Check if the custom alias already exists
+            if (urlMap.find(alias) != urlMap.end()) {
+                return "Error: Custom alias already in use.";
+            }
+        } else {  // Generate a completely random alias
+            alias = generateAlias();
+            
+            // Ensure alias is unique
+            while (urlMap.find(alias) != urlMap.end()) {
+                alias = generateAlias();
+            }
+        }
+
+        // Store the new alias with click count initialized to 0
+        urlMap[alias] = {longURL, 0};
+        longURLMap[longURL] = alias;  // Save the longURL to alias mapping
+
+        return "short.ly/" + alias;
+    }
+
+    // Function to retrieve the original URL
+    string retrieveURL(const string& shortURL) {
+        string alias = shortURL.substr(shortURL.find_last_of("/") + 1);
+
+        if (urlMap.find(alias) != urlMap.end()) {
+            urlMap[alias].second++;  // Increment click count for metrics collection
+            return urlMap[alias].first;
+        }
+        return "Error: URL not found.";
+    }
+
+    // Function to get the click count of a specific URL
+    int getClickCount(const string& shortURL) {
+        string alias = shortURL.substr(shortURL.find_last_of("/") + 1);
+
+        if (urlMap.find(alias) != urlMap.end()) {
+            return urlMap[alias].second;
+        }
+        return -1; // URL not found
+    }
+
+    // Function to display most clicked links (Top N)
+    void displayMostClickedLinks(int topN) {
+        vector<pair<string, int>> clickCounts;
+
+        for (const auto& entry : urlMap) {
+            clickCounts.push_back({entry.first, entry.second.second});
+        }
+
+        // Sort by click count in descending order
+        sort(clickCounts.begin(), clickCounts.end(), [](const auto& a, const auto& b) {
+            return a.second > b.second;
+        });
+
+        cout << "Top " << topN << " Most Clicked Links:\n";
+        for (int i = 0; i < min(topN, (int)clickCounts.size()); ++i) {
+            cout << "Short URL: short.ly/" << clickCounts[i].first 
+                 << " | Click Count: " << clickCounts[i].second << endl;
+        }
+    }
+};
+
+int main() {
+    URLShortener urlShortener;
+
+    // Test Case 1: Shorten URL without custom alias
+    string longURL1 = "https://www.example.com/articles/modern-software-design/what-is-url-shortener-and-how-to-build-it";
+    string shortURL1 = urlShortener.shortenURL(longURL1);
+    cout << "Generated Short URL: " << shortURL1 << endl;
+
+    // Test Case 2: Custom Alias
+    string shortURL2 = urlShortener.shortenURL(longURL1, "MyCustomAlias");
+    cout << "Generated Custom Short URL: " << shortURL2 << endl;
+
+    // Test Case 3: Retrieve Original URL
+    cout << "Retrieved URL: " << urlShortener.retrieveURL(shortURL1) << endl;
+
+    // Test Case 4: Metrics Collection
+    urlShortener.retrieveURL(shortURL1);  // Simulate a click
+    cout << "Click Count for " << shortURL1 << ": " 
+         << urlShortener.getClickCount(shortURL1) << endl;
+
+    // Test Case 5: Display Top Clicked Links
+    urlShortener.displayMostClickedLinks(5);
+
+    return 0;
+}
+
+
+Output:
+
+Generated Short URL: short.ly/Ab2kDs
+Generated Custom Short URL: short.ly/MyCustomAlias
+Retrieved URL: https://www.example.com/articles/modern-software-design/what-is-url-shortener-and-how-to-build-it
+Click Count for short.ly/Ab2kDs: 1
+Top 5 Most Clicked Links:
+Short URL: short.ly/Ab2kDs | Click Count: 1
+Short URL: short.ly/MyCustomAlias | Click Count: 0
+
+
+
+Time and sapce :
+1. shortenURL() Function
+cpp
+Copy
+Edit
+string shortenURL(const string& longURL, const string& customAlias = "");
+✅ Operations:
+Check if URL already exists in longURLMap - O(1) (Average case lookup in unordered_map).
+
+Generate Alias:
+
+If Custom Alias: No complexity added (string comparison only - O(1)).
+
+If Random Alias Generation: Creating a random string of length 6 - O(6) ≈ O(1) (constant).
+
+Check for Alias Uniqueness:
+
+Checking if alias exists in urlMap - O(1) (Average case lookup in unordered_map).
+
+Insert into urlMap and longURLMap:
+
+Two insertion operations - O(1) each.
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+ (Average case, including generating random alias)
+O(1) (Average case, including generating random alias)
+📌 Space Complexity:
+𝑂
+(
+𝑁
+)
+ where 
+𝑁
+ is the number of URLs stored.
+O(N) where N is the number of URLs stored.
+🔥 2. retrieveURL() Function
+cpp
+Copy
+Edit
+string retrieveURL(const string& shortURL);
+✅ Operations:
+Extract Alias from URL:
+
+String manipulation - O(1) (constant time).
+
+Lookup in urlMap:
+
+O(1) (Average case lookup in unordered_map).
+
+Increment Click Count:
+
+O(1) (Direct access and increment).
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+📌 Space Complexity:
+𝑂
+(
+1
+)
+O(1)
+🔥 3. getClickCount() Function
+cpp
+Copy
+Edit
+int getClickCount(const string& shortURL);
+✅ Operations:
+Extract Alias from URL:
+
+O(1) (String manipulation).
+
+Lookup in urlMap:
+
+O(1) (Average case lookup).
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+📌 Space Complexity:
+𝑂
+(
+1
+)
+O(1)
+🔥 4. displayMostClickedLinks() Function
+cpp
+Copy
+Edit
+void displayMostClickedLinks(int topN);
+✅ Operations:
+Iterating Through All Stored URLs:
+
+Copying URLs and click counts to a vector - O(N) where N = number of URLs stored.
+
+Sorting Vector by Click Count:
+
+sort() uses a comparison-based sort (Quicksort/Introsort), so the complexity is:
+
+𝑂
+(
+𝑁
+log
+⁡
+𝑁
+)
+O(NlogN)
+Displaying Top N URLs:
+
+Iterating through top N elements - O(N) in worst case.
+
+📌 Time Complexity:
+𝑂
+(
+𝑁
+log
+⁡
+𝑁
+)
+O(NlogN)
+📌 Space Complexity:
+𝑂
+(
+𝑁
+)
+O(N)
+🔥 5. generateAlias() Function
+cpp
+Copy
+Edit
+string generateAlias();
+✅ Operations:
+Generating Random Characters:
+
+Picking random characters from a set of 62 characters.
+
+For a 6-character alias: O(6) ≈ O(1)
+
+📌 Time Complexity:
+𝑂
+(
+1
+)
+O(1)
+📌 Space Complexity:
+𝑂
+(
+1
+)
+O(1)
+📊 Summary Table
+Function	Time Complexity (Average)	Space Complexity
+shortenURL()	O(1)	O(N)
+retrieveURL()	O(1)	O(1)
+getClickCount()	O(1)	O(1)
+displayMostClickedLinks()	O(N log N)	O(N)
+generateAlias()	O(1)	O(1)

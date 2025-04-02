@@ -1,0 +1,13 @@
+Requirement gathering
+Functional Requirment :
+
+Focus is on developing service side rate limiter.
+Rate limiter should be flexible enough to rate limit requests based on different criterias like IP_Address, UserId or any other property
+Rate limiter should work for distributed environment.
+Proper error response handling to let client know their request is throllted.
+Non Functional Requirements:
+
+Low latency
+High fault tolerance.
+Minimal memory overhead.
+10M requests per day.
